@@ -1,0 +1,30 @@
+RSSS: Really Simple Syndication Syncing
+
+An attempt to solve the problem as described by Brent Simmons in his article http://inessential.com/2010/02/08/idea_for_alternative_rss_syncing_system
+
+
+My plot and notes so far:
+
+RSSS will use node.js and redis to solve this problem. Both are pretty easy to setup on any new machine if someone wanted to make us of this on their existing system. Hopefully someone can help me out with a nice example Apache config for people to see how to add rsss.domain.com as a subdomain on existing servers.
+
+"The semantics of the GET method change to a "conditional GET" if the request message includes an If-Modified-Since, If-Unmodified-Since, If-Match, If-None-Match, or If-Range header field. A conditional GET method requests that the entity be transferred only under the circumstances described by the conditional header field(s). The conditional GET method is intended to reduce unnecessary network usage by allowing cached entities to be refreshed without requiring multiple requests or transferring data already held by the client." - http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
+http://code.google.com/p/redis/wiki/CommandReference
+
+UserID (random-generated string, tell users apart)
+
+schema:
+UserID
+     Devices ? (uuid, maybe name), (userid:devices)
+     Folders (uid, name), (folder:uid:name)
+          Feeds (uid, url), (feed:uid:url)
+               Items (uid, status, date_modified), (item:uid:status, item:uid:date_modified)
+
+Possible Requests:
+- GET new User (returns a new random string)
+- GET folders
+- GET feeds in folder (conditional GET)
+- PUT feeds (update)
+- DESTROY feeds
+- GET all feeds ? (conditional GET)
+- GET status changes since date
+- POST update status (input JSON/XML)
