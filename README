@@ -12,6 +12,7 @@ RSSS will use node.js and redis to solve this problem. Both are pretty easy to s
 References:
 http://code.google.com/p/redis/wiki/CommandReference
 https://developer.mozilla.org/En/Using_JSON_in_Firefox
+http://www.json.org/js.html
 
 UserID (random-generated string, tell users apart)
 
