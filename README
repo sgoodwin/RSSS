@@ -25,10 +25,9 @@ UserID
 
 Possible Requests:
 - GET new User (returns a new random string)
-- GET folders
-- GET feeds in folder (conditional GET)
+- GET feedlist (conditional GET)
+- POST feeds (create)
 - PUT feeds (update)
 - DESTROY feeds
-- GET all feeds ? (conditional GET)
 - GET status changes since date
 - POST update status (input JSON/XML)
