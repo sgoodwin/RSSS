@@ -1,9 +1,9 @@
 var express = require('express'),
-    connect = require('connect'),
-	redis = require("redis"),
-	client = redis.createClient(),
-	User = require('./models/User.js'),
-	Feed = require('./models/Feed.js');
+connect = require('connect'),
+redis = require("redis"),
+client = redis.createClient(),
+User = require('./models/User.js'),
+Feed = require('./models/Feed.js');
 
 // Uncomment this to see if redis is running properly:
 // client.info(redis.print);
@@ -11,20 +11,20 @@ var express = require('express'),
 // Configuration
 var app = express.createServer();
 app.configure(function(){
-    app.set('views', __dirname + '/app/views');
-    app.use(connect.bodyDecoder());
-    app.use(connect.methodOverride());
-    app.use(connect.compiler({ src: __dirname + '/public', enable: ['less'] }));
-    app.use(app.router);
-    app.use(connect.staticProvider(__dirname + '/public'));
+	app.set('views', __dirname + '/app/views');
+	app.use(connect.bodyDecoder());
+	app.use(connect.methodOverride());
+	//app.use(connect.compiler({ src: __dirname + '/public', enable: ['less'] }));
+	app.use(app.router);
+	//app.use(connect.staticProvider(__dirname + '/public'));
 });
 
 app.configure('development', function(){
-    app.use(connect.errorHandler({ dumpExceptions: true, showStack: true })); 
+	app.use(connect.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
 
 app.configure('production', function(){
-   app.use(connect.errorHandler()); 
+	app.use(connect.errorHandler()); 
 });
 
 // 
@@ -32,7 +32,7 @@ app.configure('production', function(){
 // 
 
 app.get('/', function(req, res){
-    res.send('Welcome to the party! We\'ve been waiting.');
+	res.send('Welcome to the party! We\'ve been waiting.');
 });
 
 // Possible Requests:
@@ -99,8 +99,48 @@ app.post('/feed.:format?', function(req, res){
 });
 
 // PUT feeds (update)
+app.put('/feed.:format?', function(req, res){
+	var user = new User(req.param('key'));
+	user.exists(function(exists){
+		if(exists){
+			// res.body = form data
+			Feed.find(req.body.uid, function(err, feed){
+				feed.update(req.body);
+				feed.user_id = user.key;
+				feed.save(function(success){
+					if(exists){
+						res.send("Updated JSON string: " + JSON.stringify(feed));
+					}else{
+						res.send("Failed to save!");
+					}
+				});
+			})
+		}else{
+			res.send("DNE");
+		}
+	})
+});
+
 // DESTROY feeds
-// GET all feeds ? (conditional GET)
+app.del('/feed/:uid', function(req, res){
+	var user = new User(req.param('key'));
+	user.exists(function(exists){
+		if(exists){
+			Feed.find(req.param('uid'), function(err, feed){
+				if(feed !== undefined){
+					feed.destroy(function(){
+						res.send('OK');
+					});
+				}else{
+					res.send('DNE');
+				}
+			});
+		}else{
+			res.send("DNE");
+		}
+	});
+});
+
 // GET status changes since date
 // POST update status (input JSON/XML)
 

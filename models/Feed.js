@@ -2,26 +2,29 @@ var redis = require("redis"),
 	client = redis.createClient();
 
 function Feed(hash){
+	this.uid = hash.uid;
 	this.title = hash.title;
 	this.rss_url = hash.rss_url;
 	this.html_url = hash.html_url;
+	this.user_id = '';
 }
 
 Feed.find = function(feed_id, cb){
 	var dict = {};
 	dict.uid = feed_id.toString();
 	client.get("feed:"+feed_id+":title", function(err, title){
-		dict.title = title.toString();
+		if(title !== null) { dict.title = title.toString()};
 		client.get("feed:"+feed_id+":rss_url", function(err, rss_url){
-			dict.rss_url = rss_url.toString();
+			if(rss_url !== null) {dict.rss_url = rss_url.toString()};
 			client.get("feed:"+feed_id+":html_url", function(err, html_url){
-				dict.html_url = html_url.toString();
+				if(html_url !== null){dict.html_url = html_url.toString()};
 				var newFeed = new Feed(dict);
 				cb(err, newFeed);
 			});
 		});
 	});
 }
+
 
 Feed.toOPML = function(dict){
 	// Example looks like:
@@ -39,28 +42,50 @@ Feed.prototype.toOPML = function(){
 	return "<outline text=" + this.title + " description=\"\" title=" + this.title + " type = \"rss\" version=\"RSS\" html_Url = "+this.html_url+ " xmlUrl=" + this.rss_url +"/>";
 };
 
+Feed.prototype.update = function(hash){
+	if(hash.title !== undefined){this.title = hash.title};
+	if(hash.rss_url !== undefined){this.rss_url = hash.rss_url};
+	if(hash.html_url !== undefined){this.html_url = hash.html_url};	
+}
+
 Feed.prototype.valid = function(){
 	return (this.title !== undefined && this.rss_url !== undefined && this.html_url !== undefined);
 };
 
-Feed.prototype.save = function(user_id, cb){
+Feed.prototype.destroy = function(cb){
+	var baseString = "feed:"+this.uid;
+	client.del([baseString+":title", baseString+":html_url", baseString+":rss_url"], function(err, retVal){
+		cb(true);
+	});
+}
+
+Feed.prototype.save = function(cb){
+	var feed = this;
+	if(this.valid()){
+		if(feed.uid === undefined){
+			client.incr('feed_id', function(err, newid){
+				feed.uid = newid;
+				this.store_values(cb);
+			});
+		}else{
+			this.store_values(cb)
+		}
+	}else{
+		cb(false);
+	}
+};
+
+Feed.prototype.store_values = function(cb){
 	var feed = this;
 	var baseString = "feed:";
-	if(this.valid()){
-		client.incr('feed_id', function(err, newid){
-			feed.uid = newid;
-			client.set(baseString+feed.uid+":title", feed.title, function(err, success){
+	client.set(baseString+feed.uid+":title", feed.title, function(err, success){
+		if(success == "OK"){
+			client.set(baseString+feed.uid+":rss_url", feed.rss_url, function(err, success){
 				if(success == "OK"){
-					client.set(baseString+feed.uid+":rss_url", feed.rss_url, function(err, success){
+					client.set(baseString+feed.uid+":html_url", feed.html_url, function(err, success){
 						if(success == "OK"){
-							client.set(baseString+feed.uid+":html_url", feed.html_url, function(err, success){
-								if(success == "OK"){
-									client.sadd(user_id+":feeds", feed.uid, function(err, retVal){
-										cb(true);
-									});
-								}else{
-									cb(false);
-								}
+							client.sadd(this.user_id+":feeds", feed.uid, function(err, retVal){
+								cb(true);
 							});
 						}else{
 							cb(false);
@@ -70,10 +95,10 @@ Feed.prototype.save = function(user_id, cb){
 					cb(false);
 				}
 			});
-		});
-	}else{
-		cb(false);
-	}
-};
+		}else{
+			cb(false);
+		}
+	});
+}
 
 module.exports = Feed;

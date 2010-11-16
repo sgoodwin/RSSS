@@ -54,7 +54,8 @@ User.prototype.feeds = function(cb){
 
 User.prototype.add_feed = function(hash, cb){
 	var feed = new Feed(hash);
-	feed.save(this.key, function(success){
+	feed.user_id = this.key;
+	feed.save(function(success){
 		cb(success, feed);
 	})
 };
