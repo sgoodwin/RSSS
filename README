@@ -18,16 +18,15 @@ UserID (random-generated string, tell users apart)
 
 schema:
 UserID
-     Devices ? (uuid, maybe name), (userid:devices)
-     Folders (uid, name), (folder:uid:name)
-          Feeds (uid, url), (feed:uid:url)
-               Items (uid, status, date_modified), (item:uid:status, item:uid:date_modified)
+     Feeds (uid, title, rss_url, html_url), (folder:uid:name, etc)
+		Tag(or Folder) (name)
+		Items (uid, status, date_modified), (item:uid:status, etc)
 
 Possible Requests:
-- GET new User (returns a new random string)
-- GET feedlist (conditional GET)
-- POST feeds (create)
-- PUT feeds (update)
-- DESTROY feeds
+- GET new User (returns a new random string) #working
+- GET feedlist (conditional GET) #working
+- POST feeds (create) #working
+- PUT feeds (update) #working
+- DELETE feeds #working
 - GET status changes since date
 - POST update status (input JSON/XML)
