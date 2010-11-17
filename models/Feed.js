@@ -1,8 +1,10 @@
 var redis = require("redis"),
-	client = redis.createClient();
+	client = redis.createClient(),
+	async = require('async'),
+	Item = require('./Item');
 
 function Feed(hash){
-	if(hash != undefined){
+	if(hash !== undefined){
 		this.uid = hash.uid;
 		this.title = hash.title;
 		this.rss_url = hash.rss_url;
@@ -34,8 +36,6 @@ Feed.find = function(feed_id, cb){
 
 
 Feed.toOPML = function(dict){
-	// Example looks like:
-	// <outline text="Denver Skate Shop" description="" title="Denver Skate Shop" type="rss" version="RSS" htmlUrl="http://denverskateshop.blogspot.com/" xmlUrl="http://denverskateshop.blogspot.com/feeds/posts/default"/>
 	return "<outline text=\"" + dict.title + "\" description=\"\" title=\"" + dict.title + "\" type = \"rss\" version=\"RSS\" html_Url = \""+dict.html_url+ "\" xmlUrl=\"" + dict.rss_url +"\"/>";
 };
 
@@ -44,8 +44,6 @@ Feed.prototype.toJSON = function(){
 };
 
 Feed.prototype.toOPML = function(){
-	// Example looks like:
-	// <outline text="Denver Skate Shop" description="" title="Denver Skate Shop" type="rss" version="RSS" htmlUrl="http://denverskateshop.blogspot.com/" xmlUrl="http://denverskateshop.blogspot.com/feeds/posts/default"/>
 	var string = "<outline text=" + this.title + " description=\"\" title=" + this.title + " type = \"rss\" version=\"RSS\" html_Url = "+this.html_url+ " xmlUrl=" + this.rss_url +"/>";
 	return string;
 };
@@ -64,6 +62,16 @@ Feed.prototype.destroy = function(cb){
 	var baseString = "feed:"+this.uid;
 	client.del([baseString+":title", baseString+":html_url", baseString+":rss_url"], function(err, retVal){
 		cb(true);
+	});
+};
+
+Feed.prototype.items = function(cb){
+	var itemsString = "feed:"+this.uid+":items";
+	client.smembers(itemsString, function(err, value){
+		var ids = value.toString().split(',');
+		async.map(ids, Item.find, function(err, results){
+			cb(results);
+		});
 	});
 };
 
@@ -101,7 +109,7 @@ Feed.prototype.store_values = function(cb){
 				if(success == "OK"){
 					client.set(baseString+feed.uid+":html_url", feed.html_url, function(err, success){
 						if(success == "OK"){
-							client.sadd(this.user_id+":feeds", feed.uid, function(err, retVal){
+							client.sadd(feed.user_id+":feeds", feed.uid, function(err, retVal){
 								cb(true);
 							});
 						}else{

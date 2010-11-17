@@ -103,7 +103,6 @@ app.put('/feed.:format?', function(req, res){
 	var user = new User(req.param('key'));
 	user.exists(function(exists){
 		if(exists){
-			// res.body = form data
 			Feed.find(req.body.uid, function(err, feed){
 				feed.update(req.body);
 				feed.user_id = user.key;
