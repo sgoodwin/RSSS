@@ -18,9 +18,9 @@ UserID (random-generated string, tell users apart)
 
 schema:
 UserID
-     Feeds (uid, title, rss_url, html_url), (folder:uid:name, etc)
-		Tag(or Folder) (name)
-		Items (uid, status, date_modified), (item:uid:status, etc)
+     Feeds (uid, title, rss_url, html_url ), (folder:uid:name, etc )
+		Tag(or Folder) (name), ( feed:uid:tags )
+		Items (uid, status, date_modified, feed_id ), (item:uid:status, etc ) // Not sure if feed_id is necessary.
 
 Possible Requests:
 - GET new User (returns a new random string) #working
@@ -28,5 +28,5 @@ Possible Requests:
 - POST feeds (create) #working
 - PUT feeds (update) #working
 - DELETE feeds #working
-- GET status changes since date
-- POST update status (input JSON/XML)
+- GET status changes since date ( example: http://0.0.0.0:3000/status?key=abdefhfhf&dateTime=Tue%20Nov%2016%202010%2022%3A29%3A06%20GMT-0700%20%28MST%29 ) #working
+- POST update status (input JSON) # working

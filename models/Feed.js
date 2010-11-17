@@ -19,7 +19,7 @@ Feed.find = function(feed_id, cb){
 	dict.uid = feed_id.toString();
 	var baseString = "feed:"+feed_id;
 	client.smembers(baseString+":tags", function(err, tagsBuffer){
-		dict.tags = tagsBuffer.toString().split(','); 
+		if(tagsBuffer !== null){dict.tags = tagsBuffer.toString().split(',')};
 		client.get(baseString+":title", function(err, title){
 			if(title !== null) { dict.title = title.toString();}
 			client.get(baseString+":rss_url", function(err, rss_url){
@@ -65,12 +65,12 @@ Feed.prototype.destroy = function(cb){
 	});
 };
 
-Feed.prototype.items = function(cb){
-	var itemsString = "feed:"+this.uid+":items";
+Feed.items = function(feed, cb){
+	var itemsString = "feed:"+feed.uid+":items";
 	client.smembers(itemsString, function(err, value){
 		var ids = value.toString().split(',');
 		async.map(ids, Item.find, function(err, results){
-			cb(results);
+			cb(err, results);
 		});
 	});
 };

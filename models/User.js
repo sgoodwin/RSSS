@@ -43,7 +43,7 @@ User.prototype.exists = function(cb){
 };
 
 User.prototype.feeds = function(cb){
-	var feedsString = this.key+":feeds";
+	var feedsString = this.key+':feeds';
 	client.smembers(feedsString, function(err, value){
 		var ids = value.toString().split(',');
 		async.map(ids, Feed.find, function(err, results){
@@ -58,6 +58,21 @@ User.prototype.add_feed = function(hash, cb){
 	feed.save(function(success){
 		cb(success, feed);
 	})
+};
+
+User.prototype.status_updates_since = function(date, cb){
+	this.feeds(function(results){
+		async.concat(results, Feed.items, function(err, results){
+			async.filter(results, function(item, cb){
+				var itemDate = new Date(item.date_modified);
+				if(itemDate > date){
+					cb(true);
+				}else{
+					cb(false);
+				}
+			}, cb);
+		});
+	});
 };
 
 module.exports = User;

@@ -93,7 +93,7 @@ def check_update_feed
     puts res.body
   end
 end
-check_update_feed
+#check_update_feed
 
 # DESTROY feeds
 def check_destroy_feed
@@ -122,4 +122,24 @@ end
 check_destroy_feed_invalid
 
 # GET status changes since date
+def check_get_status
+  puts "\r\n\r\nGetting status update:"
+  uri = URI.parse("http://0.0.0.0:3000/status.json?key=1&dateTime=Tue%20Nov%202%202010%2022%3A29%3A06%20GMT-0700%20%28MST%29");
+  res = Net::HTTP.get_response uri;
+  puts res.body
+end
+check_get_status
+
 # POST update status (input JSON/XML)
+def check_post_status
+  puts "\r\n\r\nPOST status update:"
+  uri = URI.parse("http://0.0.0.0:3000/status.json")
+  Net::HTTP.start(uri.host, uri.port) do |http|
+    headers = {'Content-Type' => 'application/x-www-form-urlencoded'}
+    string = Yajl::Encoder.encode([{'uid'=>'1', 'status'=>'read'}])
+    put_data = "key=1&data=#{string}"
+    res = http.send_request('POST', uri.request_uri, put_data, headers) 
+    puts res.body
+  end
+end
+check_post_status

@@ -3,7 +3,8 @@ connect = require('connect'),
 redis = require("redis"),
 client = redis.createClient(),
 User = require('./models/User.js'),
-Feed = require('./models/Feed.js');
+Feed = require('./models/Feed.js'),
+Item = require('./models/Item.js');
 
 // Uncomment this to see if redis is running properly:
 // client.info(redis.print);
@@ -141,6 +142,26 @@ app.del('/feed/:uid', function(req, res){
 });
 
 // GET status changes since date
+app.get('/status.:format?', function(req, res){
+	var user = new User(req.param('key'));
+	user.exists(function(exists){
+		if(exists){
+			var d= new Date(req.param('dateTime'));
+			user.status_updates_since(d, function(results){
+				res.send(JSON.stringify(results));
+			});
+		}else{
+			res.send('DNE');
+		}
+	});
+});
+
 // POST update status (input JSON/XML)
+app.post('/status.:format?', function(req, res){
+	var arrayOfDicts = req.body['data'];
+	Item.update_statuses(arrayOfDicts, function(success){
+		res.send(success.toString());
+	});
+});
 
 if (!module.parent) app.listen(3000);

@@ -1,5 +1,6 @@
 var redis = require("redis"),
-	client = redis.createClient();
+	client = redis.createClient(),
+	async = require('async');
 
 function Item(hash){
 	if(hash !== undefined){
@@ -9,6 +10,21 @@ function Item(hash){
 		this.date_modified = hash.date_modified;
 	}
 }
+
+Item.update_statuses = function(arrayOfdicts, cb){
+	async.forEach(JSON.parse(arrayOfdicts),
+		function(dict, cb){
+			Item.find(dict.uid, function(err, item){
+				if(dict.status !== undefined){item.status = dict.status;}
+				item.save(function(success){
+					cb(undefined);
+				});
+			});
+		}, 
+		function(err){
+			cb(true);
+		});
+};
 
 Item.find = function(item_id, cb){
 	var dict = {};
