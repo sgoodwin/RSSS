@@ -158,9 +158,16 @@ app.get('/status.:format?', function(req, res){
 
 // POST update status (input JSON/XML)
 app.post('/status.:format?', function(req, res){
-	var arrayOfDicts = req.body['data'];
-	Item.update_statuses(arrayOfDicts, function(success){
-		res.send(success.toString());
+	var user = new User(req.param('key'));
+	user.exists(function(exists){
+		if(exists){
+			var arrayOfDicts = req.body['data'];
+			Item.update_statuses(arrayOfDicts, function(success){
+				res.send(success.toString());
+			});
+		}else{
+			res.send('DNE');
+		}
 	});
 });
 
