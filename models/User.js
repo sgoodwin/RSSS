@@ -1,21 +1,33 @@
+/*
+ Pull in deps.
+*/
 var redis = require("redis"),
 	client = redis.createClient(),
 	async = require('async'),
 	Feed = require('./Feed');
 
-// User: holds no personal data, only used to tell people's feeds/folders apart;
-// schema: user:someid, user:folders ()
-
+/*
+ User: holds no personal data, only used to tell people's feeds/folders apart;
+ @constructor
+*/
 function User(akey){
 	if(akey != undefined){
 		this.key = akey;
 	}
 }
 
+/*
+ Checks a User to see if it is valid.
+ @return {Boolean} Wether or not a user is valid.
+*/
 User.prototype.valid = function(){
 	return (this.key != undefined);
 };
 
+/*
+ Asks a User to save it's info into Redis if it is not there already. This generates a new key for that user.
+ @param {function(trueOrFalse)} cb A callback function that is told wether or not the save succeeded.
+*/
 User.prototype.save = function(cb){
 	var user = this;
 	// Generate a new key if you need to.
@@ -29,11 +41,19 @@ User.prototype.save = function(cb){
 	}
 };
 
-
+/*
+ Generates the JSON representation of a User object.
+ @return {Hash} JSON-encoded representation of a User.
+*/
 User.prototype.toJSON = function(){
 	return {"user":this.key};
 };
 
+/*
+ Checks wether or not the user exists in Redis.
+ @param {function} cb A callback that is told wether or not the User exists.
+ @return {Boolean} Wether or not the user exists.
+*/
 User.prototype.exists = function(cb){
 	if(this.key == undefined){cb(false);}
 	client.sismember("users", this.key, function(err, exists){
@@ -42,6 +62,11 @@ User.prototype.exists = function(cb){
 	});
 };
 
+/*
+ Retrieves the feeds a given user has from Redis.
+ @param {function(array)} cb A callback to recieve the requested Feeds.
+ @return {Array} An array of Feed objects.
+*/
 User.prototype.feeds = function(cb){
 	var feedsString = this.key+':feeds';
 	client.smembers(feedsString, function(err, value){
@@ -52,6 +77,13 @@ User.prototype.feeds = function(cb){
 	});
 };
 
+/*
+ Addes a feed to a user's list of feeds.
+ @param {Hash} hash The hash containing necessary info to create a Feed.
+ @param {function(trueOrFalse, feed)} cb A callback function that is told wether or not the addition succeeded and, upon success, the created feed itself.
+ @return {Boolean} success Wether or not the addition succceed.
+ @return {Feed} feed The newly created feed object.
+*/
 User.prototype.add_feed = function(hash, cb){
 	var feed = new Feed(hash);
 	feed.user_id = this.key;
@@ -60,6 +92,13 @@ User.prototype.add_feed = function(hash, cb){
 	});
 };
 
+/*
+ Retrieves all of a user's status updates since a given date.
+ @param {Date} date The earliest a requested status update should come from.
+ @param {function(err, array)} cb A callback function that gets any errors generated during lookup and an array of Items successfully retrieved.
+ @return {Error} Any possible errors generated during lookup.
+ @return {Array} An array of all Items that have been updates since the given date.
+*/
 User.prototype.status_updates_since = function(date, cb){
 	this.feeds(function(results){
 		async.concat(results, Feed.items, function(err, results){

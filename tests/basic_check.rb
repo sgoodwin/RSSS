@@ -52,7 +52,7 @@ check_feedlist_opml
 
 def check_feedlist_json
   # GET feedlist
-  puts "\r\n\r\nOPML JSON List:";
+  puts "\r\n\r\nJSON Feed List:";
   res = Net::HTTP.get_response URI.parse("http://0.0.0.0:3000/feedlist.json?key=1");
   parse_json(res.body);
 end

@@ -1,7 +1,14 @@
+/*
+ Pull in deps.
+*/
 var redis = require("redis"),
 	client = redis.createClient(),
 	async = require('async');
 
+/*
+ Item encapsulates the item-specific operations performed by the API.
+ @constructor
+*/
 function Item(hash){
 	if(hash !== undefined){
 		this.uid = hash.uid;
@@ -11,6 +18,12 @@ function Item(hash){
 	}
 }
 
+/*
+ Asynchronously updates a status item's information from the given array of hashes.
+ @param {Array} arrayOfdicts An array of status hashes ( {'uid':'someitemuid','status':'read'})
+ @param {function(trueOrFalse)} cb A callback function that gets true or false as it's input value;
+ @return {Boolean} True or False depending on wether or not the updates were successful.
+*/
 Item.update_statuses = function(arrayOfdicts, cb){
 	async.forEach(JSON.parse(arrayOfdicts),
 		function(dict, cb){
@@ -26,6 +39,13 @@ Item.update_statuses = function(arrayOfdicts, cb){
 		});
 };
 
+/*
+ Retrieves the information about a specific item.
+ @param {String} item_id An item's uid.
+ @param {function(err, item)} cb A callback that recieves possible errors along with an instance of Item with the retrieved values filled in.
+ @return {Feed} feed The retrieved feed.
+ @return {Error} err Any possible errors that occurred.
+*/
 Item.find = function(item_id, cb){
 	var dict = {};
 	dict.uid = item_id.toString();
@@ -46,15 +66,27 @@ Item.find = function(item_id, cb){
 	});
 };
 
-
+/*
+ Controlling the JSON representation of Item
+ @return {Hash} JSON-ready hash of public values.
+*/
 Item.prototype.toJSON = function(){
 	return {"uid":this.uid,"status": this.status};
 };
 
+/*
+ Checks an Item to see if it is valid.
+ @return {Boolean} Wether or not the Item is valid.
+*/
 Item.prototype.valid = function(){
 	return (this.uid !== undefined && this.status !== undefined && this.date_modified !== undefined);
 };
 
+/*
+ Asks an Item to commit it's data back to Redis.
+ @param {function(trueOrFalse)} cb A callback function which is told wether or not the save succeeded.
+ @return {Boolean} Wether or not the save succeeded.
+*/
 Item.prototype.save = function(cb){
 	var item = this;
 	if(item.valid()){
@@ -64,6 +96,10 @@ Item.prototype.save = function(cb){
 	}
 };
 
+/*
+ Actually asks an Item to store it's values in Redis.
+ @private
+*/
 Item.prototype.store_values = function(cb){
 	var item = this;
 	var baseString = "item:";
