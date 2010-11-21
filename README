@@ -30,3 +30,6 @@ Possible Requests:
 - DELETE feeds #working
 - GET status changes since date ( example: http://0.0.0.0:3000/status?key=abdefhfhf&dateTime=Tue%20Nov%2016%202010%2022%3A29%3A06%20GMT-0700%20%28MST%29 ) #working
 - POST update status (input JSON) # working
+
+Docs:
+Docs can be re-generated at any time using dox (https://github.com/visionmedia/dox). Simple 'npm install dox' and execute 'regen_docs.sh' in /docs
