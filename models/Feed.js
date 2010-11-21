@@ -19,7 +19,7 @@ Feed.find = function(feed_id, cb){
 	dict.uid = feed_id.toString();
 	var baseString = "feed:"+feed_id;
 	client.smembers(baseString+":tags", function(err, tagsBuffer){
-		if(tagsBuffer !== null){dict.tags = tagsBuffer.toString().split(',')};
+		if(tagsBuffer !== null){dict.tags = tagsBuffer.toString().split(',');}
 		client.get(baseString+":title", function(err, title){
 			if(title !== null) { dict.title = title.toString();}
 			client.get(baseString+":rss_url", function(err, rss_url){

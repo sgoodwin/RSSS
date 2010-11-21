@@ -10,11 +10,11 @@ function User(akey){
 	if(akey != undefined){
 		this.key = akey;
 	}
-};
+}
 
 User.prototype.valid = function(){
 	return (this.key != undefined);
-}
+};
 
 User.prototype.save = function(cb){
 	var user = this;
@@ -26,7 +26,7 @@ User.prototype.save = function(cb){
 				cb(true);
 			});
 		});
-	};
+	}
 };
 
 
@@ -35,10 +35,10 @@ User.prototype.toJSON = function(){
 };
 
 User.prototype.exists = function(cb){
-	if(this.key == undefined){cb(false)};
+	if(this.key == undefined){cb(false);}
 	client.sismember("users", this.key, function(err, exists){
-		if(exists == 0){ cb(false)};
-		if(exists == 1){ cb(true)};
+		if(exists === 0){ cb(false);}
+		if(exists === 1){ cb(true);}
 	});
 };
 
@@ -57,7 +57,7 @@ User.prototype.add_feed = function(hash, cb){
 	feed.user_id = this.key;
 	feed.save(function(success){
 		cb(success, feed);
-	})
+	});
 };
 
 User.prototype.status_updates_since = function(date, cb){
