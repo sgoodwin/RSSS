@@ -103,7 +103,7 @@ Feed.prototype.destroy = function(cb){
 Feed.items = function(feed, cb){
 	var itemsString = "feed:"+feed.uid+":items";
 	client.smembers(itemsString, function(err, value){
-		var ids = value.toString().split(',');
+		var ids = value !== null ? value.toString().split(',') : [];
 		async.map(ids, Item.find, function(err, results){
 			cb(err, results);
 		});
@@ -155,23 +155,12 @@ Feed.prototype.save = function(cb){
 */
 Feed.prototype.store_values = function(cb){
 	var feed = this;
-	var baseString = "feed:";
-	client.set(baseString+feed.uid+":title", feed.title, function(err, success){
-		if(success == "OK"){
-			client.set(baseString+feed.uid+":rss_url", feed.rss_url, function(err, success){
-				if(success == "OK"){
-					client.set(baseString+feed.uid+":html_url", feed.html_url, function(err, success){
-						if(success == "OK"){
-							client.sadd(feed.user_id+":feeds", feed.uid, function(err, retVal){
-								cb(true);
-							});
-						}else{
-							cb(false);
-						}
-					});
-				}else{
-					cb(false);
-				}
+	var baseString = "feed:"+feed.uid;
+	var valuesAndKeys = [baseString+":title", feed.title, baseString+":rss_url", feed.rss_url, baseString+":html_url", feed.html_url];
+	client.mset(valuesAndKeys, function(err, response){
+		if(response === "OK"){
+			client.sadd(feed.user_id+":feeds", feed.uid, function(err, retVal){
+				cb(true);
 			});
 		}else{
 			cb(false);

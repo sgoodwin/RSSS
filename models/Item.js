@@ -29,6 +29,7 @@ Item.update_statuses = function(arrayOfdicts, cb){
 		function(dict, cb){
 			Item.find(dict.uid, function(err, item){
 				if(dict.status !== undefined){item.status = dict.status;}
+				console.log("Found Item: "+ JSON.stringify(item));
 				item.save(function(success){
 					cb(undefined);
 				});
@@ -97,35 +98,18 @@ Item.prototype.save = function(cb){
 };
 
 /*
- Returns a function to store a specific property for use with async functions.
- @private
-*/
-Item.prototype.storing_fn = function(propertyName){
-	var item = this;
-	var baseString = "item:";
-	return function(callback){
-		client.set(baseString+item.uid+":"+propertyName, item[propertyName], function(err, success){
-			if(success == "OK"){
-				callback(null, success);
-			}else{
-				callback('Failed', undefined);
-			}
-		});
-	};
-};
-
-/*
  Actually asks an Item to store it's values in Redis.
  @private
 */
 Item.prototype.store_values = function(cb){
-	async.parallel([
-		this.storing_fn('status'),
-		this.storing_fn('feed_id'),
-		this.storing_fn('date_modified')
-	], function(err, results){
-		if(err === null || err === undefined){
-			cb(true);
+	var item = this;
+	var baseString = "item:"+item.uid;
+	var valuesAndKeys = [baseString+":status", item.status, baseString+":feed_id", item.feed_id, baseString+":date_modified", item.date_modified];
+	client.mset(valuesAndKeys, function(err, response){
+		if(response === "OK"){
+			client.sadd('feed:'+item.feed_id+":items", item.uid, function(err, response){
+				cb(true);
+			});
 		}else{
 			cb(false);
 		}
