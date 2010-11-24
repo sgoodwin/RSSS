@@ -97,29 +97,35 @@ Item.prototype.save = function(cb){
 };
 
 /*
+ Returns a function to store a specific property for use with async functions.
+ @private
+*/
+Item.prototype.storing_fn = function(propertyName){
+	var item = this;
+	var baseString = "item:";
+	return function(callback){
+		client.set(baseString+item.uid+":"+propertyName, item[propertyName], function(err, success){
+			if(success == "OK"){
+				callback(null, success);
+			}else{
+				callback('Failed', undefined);
+			}
+		});
+	};
+};
+
+/*
  Actually asks an Item to store it's values in Redis.
  @private
 */
 Item.prototype.store_values = function(cb){
-	var item = this;
-	var baseString = "item:";
-	client.set(baseString+item.uid+":status", item.status, function(err, success){
-		if(success == "OK"){
-			client.set(baseString+item.uid+":date_modified", item.date_modified, function(err, success){
-				if(success == "OK"){
-					client.set(baseString+item.uid+":feed_id", item.feed_id, function(err, success){
-						if(success == "OK"){
-							client.sadd("feed:"+item.feed_id+":items", item.uid, function(err, retVal){
-								cb(true);
-							});
-						}else{
-							cb(false);
-						}
-					});
-				}else{
-					cb(false);
-				}
-			});
+	async.parallel([
+		this.storing_fn('status'),
+		this.storing_fn('feed_id'),
+		this.storing_fn('date_modified')
+	], function(err, results){
+		if(err === null || err === undefined){
+			cb(true);
 		}else{
 			cb(false);
 		}
