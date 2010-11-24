@@ -30,19 +30,14 @@ Feed.find = function(feed_id, cb){
 	var dict = {};
 	dict.uid = feed_id.toString();
 	var baseString = "feed:"+feed_id;
-	client.smembers(baseString+":tags", function(err, tagsBuffer){
-		if(tagsBuffer !== null){dict.tags = tagsBuffer.toString().split(',');}
-		client.get(baseString+":title", function(err, title){
-			if(title !== null) { dict.title = title.toString();}
-			client.get(baseString+":rss_url", function(err, rss_url){
-				if(rss_url !== null) {dict.rss_url = rss_url.toString();}
-				client.get(baseString+":html_url", function(err, html_url){
-					if(html_url !== null){dict.html_url = html_url.toString();}
-					var newFeed = new Feed(dict);
-					cb(err, newFeed);
-				});
-			});
-		});
+	var keys = [baseString+":tags", baseString+":title", baseString+":rss_url", baseString+":html_url"];
+	client.mget(keys, function(err, values){
+		if(values[0] !== null){dict.tags = values[0].toString().split(',');}
+		if(values[1] !== null) { dict.title = values[1].toString();}
+		if(values[2] !== null) {dict.rss_url = values[2].toString();}
+		if(values[3] !== null){dict.html_url = values[3].toString();}
+		var newFeed = new Feed(dict);
+		cb(err, newFeed);
 	});
 };
 

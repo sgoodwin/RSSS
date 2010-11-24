@@ -51,20 +51,14 @@ Item.find = function(item_id, cb){
 	var dict = {};
 	dict.uid = item_id.toString();
 	var baseString = "item:"+item_id;
-	client.get(baseString+":uid", function(err, uid){
-		if(uid !== null) { dict.uid = uid.toString();}
-		client.get(baseString+":status", function(err, status){
-			if(status !== null) {dict.status = status.toString();}
-			client.get(baseString+":date_modified", function(err, date_modified){
-				if(date_modified !== null){dict.date_modified = date_modified.toString();}
-				client.get(baseString+":feed_id", function(err, feed_id){
-					if(feed_id !== null){dict.feed_id = feed_id.toString();}
-					var newItem = new Item(dict);
-					cb(err, newItem);
-				});
-			});
-		});
-	});
+	var keys = [baseString+":status", baseString+":date_modified", baseString+":feed_id"];
+	client.mget(keys, function(err, results){
+		if(results[0] !== null){dict.status = results[0].toString();}
+		if(results[1] !== null){dict.date_modified = results[1].toString();}
+		if(results[2] !== null){dict.feed_id = results[2].toString();}
+		var newItem = new Item(dict);
+		cb(err, newItem);
+	});	
 };
 
 /*
