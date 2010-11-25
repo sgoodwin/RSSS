@@ -13,8 +13,8 @@ function Item(hash){
 	if(hash !== undefined){
 		this.uid = hash.uid;
 		this.status = hash.status;
-		this.feed_id = hash.feed_id;
-		this.date_modified = hash.date_modified;
+		this.feedID = hash.feedID;
+		this.dateModified = hash.dateModified;
 	}
 }
 
@@ -24,12 +24,11 @@ function Item(hash){
  @param {function(trueOrFalse)} cb A callback function that gets true or false as it's input value;
  @return {Boolean} True or False depending on wether or not the updates were successful.
 */
-Item.update_statuses = function(arrayOfdicts, cb){
+Item.updateStatuses = function(arrayOfdicts, cb){
 	async.forEach(JSON.parse(arrayOfdicts),
 		function(dict, cb){
 			Item.find(dict.uid, function(err, item){
 				if(dict.status !== undefined){item.status = dict.status;}
-				console.log("Found Item: "+ JSON.stringify(item));
 				item.save(function(success){
 					cb(undefined);
 				});
@@ -42,20 +41,20 @@ Item.update_statuses = function(arrayOfdicts, cb){
 
 /*
  Retrieves the information about a specific item.
- @param {String} item_id An item's uid.
+ @param {String} itemID An item's uid.
  @param {function(err, item)} cb A callback that recieves possible errors along with an instance of Item with the retrieved values filled in.
  @return {Feed} feed The retrieved feed.
  @return {Error} err Any possible errors that occurred.
 */
-Item.find = function(item_id, cb){
+Item.find = function(itemID, cb){
 	var dict = {};
-	dict.uid = item_id.toString();
-	var baseString = "item:"+item_id;
-	var keys = [baseString+":status", baseString+":date_modified", baseString+":feed_id"];
+	dict.uid = itemID.toString();
+	var baseString = "item:"+itemID;
+	var keys = [baseString+":status", baseString+":dateModified", baseString+":feedID"];
 	client.mget(keys, function(err, results){
 		if(results[0] !== null){dict.status = results[0].toString();}
-		if(results[1] !== null){dict.date_modified = results[1].toString();}
-		if(results[2] !== null){dict.feed_id = results[2].toString();}
+		if(results[1] !== null){dict.dateModified = results[1].toString();}
+		if(results[2] !== null){dict.feedID = results[2].toString();}
 		var newItem = new Item(dict);
 		cb(err, newItem);
 	});	
@@ -74,7 +73,7 @@ Item.prototype.toJSON = function(){
  @return {Boolean} Wether or not the Item is valid.
 */
 Item.prototype.valid = function(){
-	return (this.uid !== undefined && this.status !== undefined && this.date_modified !== undefined);
+	return (this.uid !== undefined && this.status !== undefined && this.dateModified !== undefined);
 };
 
 /*
@@ -85,7 +84,7 @@ Item.prototype.valid = function(){
 Item.prototype.save = function(cb){
 	var item = this;
 	if(item.valid()){
-		item.store_values(cb);
+		item.storeValues(cb);
 	}else{
 		cb(false);
 	}
@@ -95,13 +94,13 @@ Item.prototype.save = function(cb){
  Actually asks an Item to store it's values in Redis.
  @private
 */
-Item.prototype.store_values = function(cb){
+Item.prototype.storeValues = function(cb){
 	var item = this;
 	var baseString = "item:"+item.uid;
-	var valuesAndKeys = [baseString+":status", item.status, baseString+":feed_id", item.feed_id, baseString+":date_modified", item.date_modified];
+	var valuesAndKeys = [baseString+":status", item.status, baseString+":feedID", item.feedID, baseString+":dateModified", item.dateModified];
 	client.mset(valuesAndKeys, function(err, response){
 		if(response === "OK"){
-			client.sadd('feed:'+item.feed_id+":items", item.uid, function(err, response){
+			client.sadd('feed:'+item.feedID+":items", item.uid, function(err, response){
 				cb(true);
 			});
 		}else{

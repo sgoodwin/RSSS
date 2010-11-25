@@ -10,9 +10,9 @@ var redis = require("redis"),
  User: holds no personal data, only used to tell people's feeds/folders apart;
  @constructor
 */
-function User(akey){
-	if(akey != undefined){
-		this.key = akey;
+function User(hash){
+	if(hash != undefined){
+		this.key = hash['key'];
 	}
 }
 
@@ -30,12 +30,15 @@ User.prototype.valid = function(){
 */
 User.prototype.save = function(cb){
 	var user = this;
+	var d = new Date();
 	// Generate a new key if you need to.
 	if(this.key == undefined){
-		client.incr('user_id', function(err, newid){
+		client.incr('userID', function(err, newid){
 			user.key = newid; // Might wanna do some hashing or combine this key with the date or some such.
 			client.sadd("users", user.key, function(err, retVal){
-				cb(true);
+				client.set(user.key + ":feedModified", d.toString(), function(err, results){
+					cb(true);
+				});
 			});
 		});
 	}
@@ -70,10 +73,14 @@ User.prototype.exists = function(cb){
 User.prototype.feeds = function(cb){
 	var feedsString = this.key+':feeds';
 	client.smembers(feedsString, function(err, value){
-		var ids = value.toString().split(',');
-		async.map(ids, Feed.find, function(err, results){
-			cb(results);
-		});
+		if(value === null){
+			cb([]);	
+		}else{
+			var ids = value.toString().split(',');
+			async.map(ids, Feed.find, function(err, results){
+				cb(results);
+			});
+		}
 	});
 };
 
@@ -84,11 +91,15 @@ User.prototype.feeds = function(cb){
  @return {Boolean} success Wether or not the addition succceed.
  @return {Feed} feed The newly created feed object.
 */
-User.prototype.add_feed = function(hash, cb){
+User.prototype.addFeed = function(hash, cb){
 	var feed = new Feed(hash);
-	feed.user_id = this.key;
+	var user = this;
+	feed.userID = this.key;
 	feed.save(function(success){
-		cb(success, feed);
+		var d = new Date();
+		client.set(user.key + ":feedModified", d.toString(), function(err, results){
+			cb(success, feed);
+		});
 	});
 };
 
@@ -99,11 +110,11 @@ User.prototype.add_feed = function(hash, cb){
  @return {Error} Any possible errors generated during lookup.
  @return {Array} An array of all Items that have been updates since the given date.
 */
-User.prototype.status_updates_since = function(date, cb){
+User.prototype.statusUpdatesSince = function(date, cb){
 	this.feeds(function(results){
 		async.concat(results, Feed.items, function(err, results){
 			async.filter(results, function(item, cb){
-				var itemDate = new Date(item.date_modified);
+				var itemDate = new Date(item.dateModified);
 				if(itemDate > date){
 					cb(true);
 				}else{

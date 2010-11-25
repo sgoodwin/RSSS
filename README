@@ -18,9 +18,9 @@ UserID (random-generated string, tell users apart)
 
 schema:
 UserID
-     Feeds (uid, title, rss_url, html_url ), (folder:uid:name, etc )
+     Feeds (uid, title, rssURL, htmlURL ), (folder:uid:name, etc )
 		Tag(or Folder) (name), ( feed:uid:tags )
-		Items (uid, status, date_modified, feed_id ), (item:uid:status, etc ) // Not sure if feed_id is necessary.
+		Items (uid, status, dateModified, feedID ), (item:uid:status, etc ) // Not sure if feedID is necessary.
 
 Possible Requests:
 - GET new User (returns a new random string) #working

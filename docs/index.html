@@ -114,12 +114,12 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="keyword">var</span> <span class="variable">express</span> = <span class="variable">require</span>(<span class="string">'express'</span>),
-<span class="variable">connect</span> = <span class="variable">require</span>(<span class="string">'connect'</span>),
-<span class="variable">redis</span> = <span class="variable">require</span>(&<span class="variable">quot</span>;<span class="variable">redis</span>&<span class="variable">quot</span>;),
-<span class="variable">client</span> = <span class="variable">redis</span>.<span class="variable">createClient</span>(),
-<span class="class">User</span> = <span class="variable">require</span>(<span class="string">'./models/User.js'</span>),
-<span class="class">Feed</span> = <span class="variable">require</span>(<span class="string">'./models/Feed.js'</span>),
-<span class="class">Item</span> = <span class="variable">require</span>(<span class="string">'./models/Item.js'</span>);</code></pre>
+	<span class="variable">connect</span> = <span class="variable">require</span>(<span class="string">'connect'</span>),
+	<span class="variable">redis</span> = <span class="variable">require</span>(&<span class="variable">quot</span>;<span class="variable">redis</span>&<span class="variable">quot</span>;),
+	<span class="variable">client</span> = <span class="variable">redis</span>.<span class="variable">createClient</span>(),
+	<span class="class">User</span> = <span class="variable">require</span>(<span class="string">'./models/User.js'</span>),
+	<span class="class">Feed</span> = <span class="variable">require</span>(<span class="string">'./models/Feed.js'</span>),
+	<span class="class">Item</span> = <span class="variable">require</span>(<span class="string">'./models/Item.js'</span>);</code></pre>
 </td>
 </tr>
 <tr class="code">
@@ -183,7 +183,7 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">get</span>(<span class="string">'/check.:format?'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="variable">res</span>.<span class="variable">send</span>(<span class="variable">exists</span>.<span class="variable">toString</span>());
 	});
@@ -199,26 +199,34 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">get</span>(<span class="string">'/feedlist.:format'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">modifiedSince</span> = <span class="variable">req</span>.<span class="variable">header</span>(<span class="string">'If-Modified-Since'</span>);
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="keyword">if</span>(<span class="variable">exists</span>){
-			<span class="variable">user</span>.<span class="variable">feeds</span>(<span class="keyword">function</span>(<span class="variable">array</span>){
-				<span class="comment">// I heart JSON.stringify</span>
-				<span class="keyword">if</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'format'</span>) == <span class="string">'json'</span>){<span class="variable">res</span>.<span class="variable">send</span>(<span class="class">JSON</span>.<span class="variable">stringify</span>(<span class="variable">array</span>));}
-				<span class="keyword">if</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'format'</span>) == <span class="string">'opml'</span>){
-					<span class="comment">// Probably not the best way to build opml, but it's 6am now...</span>
-					<span class="keyword">var</span> <span class="variable">string</span> = &<span class="variable">quot</span>;&<span class="variable">lt</span>;?<span class="variable">xml</span> <span class="variable">version</span>=\&<span class="variable">quot</span>;<span class="number float">1.0</span>\&<span class="variable">quot</span>; <span class="variable">encoding</span>=\&<span class="variable">quot</span>;<span class="class">UTF</span>-<span class="number integer">8</span>\&<span class="variable">quot</span>;?&<span class="variable">gt</span>; \
-					&<span class="variable">lt</span>;!-- <span class="class">OPML</span> <span class="variable">generated</span> <span class="variable">by</span> <span class="class">RSSS</span> --&<span class="variable">gt</span>; \
-					&<span class="variable">lt</span>;<span class="variable">opml</span> <span class="variable">version</span>=\&<span class="variable">quot</span>;<span class="number float">1.1</span>\&<span class="variable">quot</span>;&<span class="variable">gt</span>; \
-					&<span class="variable">lt</span>;<span class="variable">head</span>&<span class="variable">gt</span>;&<span class="variable">lt</span>;<span class="variable">title</span>&<span class="variable">gt</span>;<span class="variable">mySubscriptions</span>&<span class="variable">lt</span>;<span class="regexp">/title&gt;&lt;/head</span>&<span class="variable">gt</span>;&<span class="variable">lt</span>;<span class="variable">body</span>&<span class="variable">gt</span>;&<span class="variable">quot</span>;;
-					<span class="keyword">for</span>(<span class="keyword">var</span> <span class="variable">i</span> =<span class="number integer">0</span>;<span class="variable">i</span>&<span class="variable">lt</span>;=(<span class="variable">array</span>.<span class="variable">length</span>-<span class="number integer">1</span>);<span class="variable">i</span> = <span class="variable">i</span>+<span class="number integer">1</span>){
-						<span class="variable">string</span> = <span class="variable">string</span>.<span class="variable">concat</span>(<span class="class">Feed</span>.<span class="variable">toOPML</span>(<span class="variable">array</span>[<span class="variable">i</span>]));
+			<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">user</span>.<span class="variable">key</span>+&<span class="variable">quot</span>;:<span class="variable">feedModified</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">value</span>){
+				<span class="keyword">var</span> <span class="variable">sendFeedList</span> = <span class="keyword">function</span>(){
+					<span class="keyword">var</span> <span class="variable">d</span> = <span class="keyword">new</span> <span class="class">Date</span>();
+					<span class="keyword">var</span> <span class="variable">dateString</span> = <span class="variable">value</span> === <span class="keyword">null</span> ? <span class="variable">d</span>.<span class="variable">toString</span>() : <span class="variable">value</span>.<span class="variable">toString</span>();
+					<span class="variable">user</span>.<span class="variable">feeds</span>(<span class="keyword">function</span>(<span class="variable">array</span>){
+						<span class="keyword">if</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'format'</span>) == <span class="string">'json'</span>){<span class="variable">res</span>.<span class="variable">send</span>(<span class="class">JSON</span>.<span class="variable">stringify</span>(<span class="variable">array</span>), { <span class="string">'Last-Modified'</span>: <span class="variable">dateString</span> });} <span class="comment">// I heart JSON.stringify</span>
+						<span class="keyword">if</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'format'</span>) == <span class="string">'opml'</span>){<span class="variable">res</span>.<span class="variable">send</span>(<span class="class">Feed</span>.<span class="variable">opml</span>(<span class="variable">array</span>), { <span class="string">'Last-Modified'</span>: <span class="variable">dateString</span> });}
+					});
+				};
+				
+				<span class="keyword">if</span>(<span class="variable">modifiedSince</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="variable">value</span> !== <span class="keyword">null</span>){
+					<span class="keyword">var</span> <span class="variable">dateA</span> = <span class="keyword">new</span> <span class="class">Date</span>(<span class="variable">value</span>.<span class="variable">toString</span>());
+					<span class="keyword">var</span> <span class="variable">dateB</span> = <span class="keyword">new</span> <span class="class">Date</span>(<span class="variable">modifiedSince</span>);
+					<span class="keyword">if</span>(<span class="variable">dateA</span> &<span class="variable">lt</span>; <span class="variable">dateB</span>){
+						<span class="variable">sendFeedList</span>();
+					}<span class="keyword">else</span>{
+						<span class="variable">res</span>.<span class="variable">send</span>(<span class="number integer">304</span>);
 					}
-					<span class="variable">res</span>.<span class="variable">send</span>(<span class="variable">string</span>.<span class="variable">concat</span>(<span class="string">'&lt;/body&gt;&lt;/opml&gt;'</span>));
+				}<span class="keyword">else</span>{
+					<span class="variable">sendFeedList</span>();
 				}
 			});
 		}<span class="keyword">else</span>{
-			<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">DNE</span>&<span class="variable">quot</span>;);
+			<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">DNE</span>&<span class="variable">quot</span>;, <span class="number integer">403</span>);
 		}
 	});
 });</code></pre>
@@ -229,22 +237,22 @@ code .this { color: #19469D; }</style>
 <p> POST feed (create)
 ## </p>
 
-<ul><li><p><strong>param</strong>: <em>String</em>  key User-specify key provided by newUser request.</p></li><li><p><strong>param</strong>: <em>String</em>  uid The new feed's uid</p></li><li><p><strong>param</strong>: <em>String</em>  title The new feed's title</p></li><li><p><strong>param</strong>: <em>String</em>  rss_url The new feed's rss url</p></li><li><p><strong>param</strong>: <em>String</em>  html_url The new feed's homepage url</p></li><li><p><strong>param</strong>: <em>String</em>  tags A JSON-encoded array of any Folders/Tags this feed belongs to.</p></li></ul>
+<ul><li><p><strong>param</strong>: <em>String</em>  key User-specify key provided by newUser request.</p></li><li><p><strong>param</strong>: <em>String</em>  uid The new feed's uid</p></li><li><p><strong>param</strong>: <em>String</em>  title The new feed's title</p></li><li><p><strong>param</strong>: <em>String</em>  rssURL The new feed's rss url</p></li><li><p><strong>param</strong>: <em>String</em>  htmlURL The new feed's homepage url</p></li><li><p><strong>param</strong>: <em>String</em>  tags A JSON-encoded array of any Folders/Tags this feed belongs to.</p></li></ul>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">post</span>(<span class="string">'/feed.:format?'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="keyword">if</span>(<span class="variable">exists</span>){
-			<span class="variable">user</span>.<span class="variable">add_feed</span>(<span class="variable">req</span>.<span class="variable">body</span>, <span class="keyword">function</span>(<span class="variable">success</span>, <span class="variable">feed</span>){
+			<span class="variable">user</span>.<span class="variable">addFeed</span>(<span class="variable">req</span>.<span class="variable">body</span>, <span class="keyword">function</span>(<span class="variable">success</span>, <span class="variable">feed</span>){
 				<span class="keyword">if</span>(<span class="variable">success</span>){
 					<span class="variable">res</span>.<span class="variable">send</span>(<span class="class">JSON</span>.<span class="variable">stringify</span>(<span class="variable">feed</span>));
 				}<span class="keyword">else</span>{
-					<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">DNE</span>&<span class="variable">quot</span>;);
+					<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">DNE</span>&<span class="variable">quot</span>;, <span class="number integer">403</span>);
 				}
 			});
 		}<span class="keyword">else</span>{
-			<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">DNE</span>&<span class="variable">quot</span>;);
+			<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">DNE</span>&<span class="variable">quot</span>;, <span class="number integer">403</span>);
 		}
 	});
 });</code></pre>
@@ -255,16 +263,16 @@ code .this { color: #19469D; }</style>
 <p> PUT feeds (update)
 ## </p>
 
-<ul><li><p><strong>param</strong>: <em>String</em>  key User-specify key provided by newUser request.</p></li><li><p><strong>param</strong>: <em>String</em>  uid The uid of the feed you wish to update.</p></li><li><p><strong>param</strong>: <em>String</em>  title (Optional) The feed's new title</p></li><li><p><strong>param</strong>: <em>String</em>  rss_url (Optional) The feed's new rss url</p></li><li><p><strong>param</strong>: <em>String</em>  html_url (Optional) The feed's new homepage url</p></li><li><p><strong>param</strong>: <em>String</em>  tags (Optional) A JSON-encoded array of any Folders/Tags this feed belongs to.</p></li></ul>
+<ul><li><p><strong>param</strong>: <em>String</em>  key User-specify key provided by newUser request.</p></li><li><p><strong>param</strong>: <em>String</em>  uid The uid of the feed you wish to update.</p></li><li><p><strong>param</strong>: <em>String</em>  title (Optional) The feed's new title</p></li><li><p><strong>param</strong>: <em>String</em>  rssURL (Optional) The feed's new rss url</p></li><li><p><strong>param</strong>: <em>String</em>  htmlURL (Optional) The feed's new homepage url</p></li><li><p><strong>param</strong>: <em>String</em>  tags (Optional) A JSON-encoded array of any Folders/Tags this feed belongs to.</p></li></ul>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">put</span>(<span class="string">'/feed.:format?'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="keyword">if</span>(<span class="variable">exists</span>){
 			<span class="class">Feed</span>.<span class="variable">find</span>(<span class="variable">req</span>.<span class="variable">body</span>.<span class="variable">uid</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">feed</span>){
 				<span class="variable">feed</span>.<span class="variable">update</span>(<span class="variable">req</span>.<span class="variable">body</span>);
-				<span class="variable">feed</span>.<span class="variable">user_id</span> = <span class="variable">user</span>.<span class="variable">key</span>;
+				<span class="variable">feed</span>.<span class="variable">userID</span> = <span class="variable">user</span>.<span class="variable">key</span>;
 				<span class="variable">feed</span>.<span class="variable">save</span>(<span class="keyword">function</span>(<span class="variable">success</span>){
 					<span class="keyword">if</span>(<span class="variable">exists</span>){
 						<span class="variable">res</span>.<span class="variable">send</span>(&<span class="variable">quot</span>;<span class="class">Updated</span> <span class="class">JSON</span> <span class="variable">string</span>: &<span class="variable">quot</span>; + <span class="class">JSON</span>.<span class="variable">stringify</span>(<span class="variable">feed</span>));
@@ -289,7 +297,7 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">del</span>(<span class="string">'/feed/:uid'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="keyword">if</span>(<span class="variable">exists</span>){
 			<span class="class">Feed</span>.<span class="variable">find</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'uid'</span>), <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">feed</span>){
@@ -317,11 +325,11 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">get</span>(<span class="string">'/status.:format?'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="keyword">if</span>(<span class="variable">exists</span>){
 			<span class="keyword">var</span> <span class="variable">d</span>= <span class="keyword">new</span> <span class="class">Date</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'dateTime'</span>));
-			<span class="variable">user</span>.<span class="variable">status_updates_since</span>(<span class="variable">d</span>, <span class="keyword">function</span>(<span class="variable">results</span>){
+			<span class="variable">user</span>.<span class="variable">statusUpdatesSince</span>(<span class="variable">d</span>, <span class="keyword">function</span>(<span class="variable">results</span>){
 				<span class="variable">res</span>.<span class="variable">send</span>(<span class="class">JSON</span>.<span class="variable">stringify</span>(<span class="variable">results</span>));
 			});
 		}<span class="keyword">else</span>{
@@ -340,11 +348,11 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="variable">app</span>.<span class="variable">post</span>(<span class="string">'/status.:format?'</span>, <span class="keyword">function</span>(<span class="variable">req</span>, <span class="variable">res</span>){
-	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>(<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>));
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="keyword">new</span> <span class="class">User</span>({<span class="string">'key'</span>:<span class="variable">req</span>.<span class="variable">param</span>(<span class="string">'key'</span>)});
 	<span class="variable">user</span>.<span class="variable">exists</span>(<span class="keyword">function</span>(<span class="variable">exists</span>){
 		<span class="keyword">if</span>(<span class="variable">exists</span>){
 			<span class="keyword">var</span> <span class="variable">arrayOfDicts</span> = <span class="variable">req</span>.<span class="variable">body</span>[<span class="string">'data'</span>];
-			<span class="class">Item</span>.<span class="variable">update_statuses</span>(<span class="variable">arrayOfDicts</span>, <span class="keyword">function</span>(<span class="variable">success</span>){
+			<span class="class">Item</span>.<span class="variable">updateStatuses</span>(<span class="variable">arrayOfDicts</span>, <span class="keyword">function</span>(<span class="variable">success</span>){
 				<span class="variable">res</span>.<span class="variable">send</span>(<span class="variable">success</span>.<span class="variable">toString</span>());
 			});
 		}<span class="keyword">else</span>{
@@ -360,6 +368,239 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="keyword">if</span> (!<span class="variable">module</span>.<span class="variable">parent</span>) {<span class="variable">app</span>.<span class="variable">listen</span>(<span class="number integer">3000</span>);}</code></pre>
+</td>
+</tr><tr class="filename"><td><h2 id="../models/Feed.js"><a href="#">Feed</a></h2></td><td>../models/Feed.js</td></tr><tr class="code">
+<td class="docs">
+<p> Pull in deps.</p>
+</td>
+<td class="code">
+<pre><code><span class="keyword">var</span> <span class="variable">redis</span> = <span class="variable">require</span>(&<span class="variable">quot</span>;<span class="variable">redis</span>&<span class="variable">quot</span>;),
+	<span class="variable">client</span> = <span class="variable">redis</span>.<span class="variable">createClient</span>(),
+	<span class="variable">async</span> = <span class="variable">require</span>(<span class="string">'async'</span>),
+	<span class="class">Item</span> = <span class="variable">require</span>(<span class="string">'./Item'</span>);</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Feed encapsulates the feed-specific operations performed by the API.
+ - <strong>constructo</strong>: <em>r</em></p>
+</td>
+<td class="code">
+<pre><code><span class="keyword">function</span> <span class="class">Feed</span>(<span class="variable">hash</span>){
+	<span class="keyword">if</span>(<span class="variable">hash</span> !== <span class="variable">undefined</span>){
+		<span class="this">this</span>.<span class="variable">uid</span> = <span class="variable">hash</span>.<span class="variable">uid</span>;
+		<span class="this">this</span>.<span class="variable">title</span> = <span class="variable">hash</span>.<span class="variable">title</span>;
+		<span class="this">this</span>.<span class="variable">rssURL</span> = <span class="variable">hash</span>.<span class="variable">rssURL</span>;
+		<span class="this">this</span>.<span class="variable">htmlURL</span> = <span class="variable">hash</span>.<span class="variable">htmlURL</span>;
+		<span class="this">this</span>.<span class="variable">userID</span> = <span class="string">''</span>;
+		<span class="this">this</span>.<span class="variable">tags</span> = <span class="variable">hash</span>.<span class="variable">tags</span>;
+	}
+}</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Generates an instanced of Feed with values retrieved from Redis given a feed's UID.
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>String</em>  feedID The UID of the feed you wish to find.</p></li><li><p><strong>return</strong>: <em>Feed</em>  A Feed instance with all values filled in</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">find</span> = <span class="keyword">function</span>(<span class="variable">feedID</span>, <span class="variable">cb</span>){
+	<span class="keyword">var</span> <span class="variable">dict</span> = {};
+	<span class="variable">dict</span>.<span class="variable">uid</span> = <span class="variable">feedID</span>.<span class="variable">toString</span>();
+	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="variable">feedID</span>;
+	<span class="keyword">var</span> <span class="variable">keys</span> = [<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">tags</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">title</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">rssURL</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">htmlURL</span>&<span class="variable">quot</span>;];
+	<span class="variable">client</span>.<span class="variable">mget</span>(<span class="variable">keys</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">values</span>){
+		<span class="keyword">if</span>(<span class="variable">values</span>[<span class="number integer">0</span>] !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">tags</span> = <span class="variable">values</span>[<span class="number integer">0</span>].<span class="variable">toString</span>().<span class="variable">split</span>(<span class="string">','</span>);}
+		<span class="keyword">if</span>(<span class="variable">values</span>[<span class="number integer">1</span>] !== <span class="keyword">null</span>) { <span class="variable">dict</span>.<span class="variable">title</span> = <span class="variable">values</span>[<span class="number integer">1</span>].<span class="variable">toString</span>();}
+		<span class="keyword">if</span>(<span class="variable">values</span>[<span class="number integer">2</span>] !== <span class="keyword">null</span>) {<span class="variable">dict</span>.<span class="variable">rssURL</span> = <span class="variable">values</span>[<span class="number integer">2</span>].<span class="variable">toString</span>();}
+		<span class="keyword">if</span>(<span class="variable">values</span>[<span class="number integer">3</span>] !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">htmlURL</span> = <span class="variable">values</span>[<span class="number integer">3</span>].<span class="variable">toString</span>();}
+		<span class="keyword">var</span> <span class="variable">newFeed</span> = <span class="keyword">new</span> <span class="class">Feed</span>(<span class="variable">dict</span>);
+		<span class="variable">cb</span>(<span class="variable">err</span>, <span class="variable">newFeed</span>);
+	});
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Generates the OPML for a list of feeds.
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>Array</em>  array An array of Feed objects.</p></li><li><p><strong>return</strong>: <em>String</em>  OPML line based on the feeds.</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">opml</span> = <span class="keyword">function</span>(<span class="variable">array</span>){
+	<span class="keyword">var</span> <span class="variable">string</span> = &<span class="variable">quot</span>;&<span class="variable">lt</span>;?<span class="variable">xml</span> <span class="variable">version</span>=\&<span class="variable">quot</span>;<span class="number float">1.0</span>\&<span class="variable">quot</span>; <span class="variable">encoding</span>=\&<span class="variable">quot</span>;<span class="class">UTF</span>-<span class="number integer">8</span>\&<span class="variable">quot</span>;?&<span class="variable">gt</span>; \
+	&<span class="variable">lt</span>;!-- <span class="class">OPML</span> <span class="variable">generated</span> <span class="variable">by</span> <span class="class">RSSS</span> --&<span class="variable">gt</span>; \
+	&<span class="variable">lt</span>;<span class="variable">opml</span> <span class="variable">version</span>=\&<span class="variable">quot</span>;<span class="number float">1.1</span>\&<span class="variable">quot</span>;&<span class="variable">gt</span>; \
+	&<span class="variable">lt</span>;<span class="variable">head</span>&<span class="variable">gt</span>;&<span class="variable">lt</span>;<span class="variable">title</span>&<span class="variable">gt</span>;<span class="variable">mySubscriptions</span>&<span class="variable">lt</span>;<span class="regexp">/title&gt;&lt;/head</span>&<span class="variable">gt</span>;&<span class="variable">lt</span>;<span class="variable">body</span>&<span class="variable">gt</span>;&<span class="variable">quot</span>;;
+	<span class="keyword">for</span>(<span class="keyword">var</span> <span class="variable">i</span> =<span class="number integer">0</span>;<span class="variable">i</span>&<span class="variable">lt</span>;=(<span class="variable">array</span>.<span class="variable">length</span>-<span class="number integer">1</span>);<span class="variable">i</span> = <span class="variable">i</span>+<span class="number integer">1</span>){
+		<span class="variable">string</span> = <span class="variable">string</span>.<span class="variable">concat</span>(<span class="class">Feed</span>.<span class="variable">toOPML</span>(<span class="variable">array</span>[<span class="variable">i</span>]));
+	}
+	<span class="keyword">return</span> <span class="variable">string</span>.<span class="variable">concat</span>(<span class="string">'&lt;/body&gt;&lt;/opml&gt;'</span>);
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Generates the OPML line for a given feed.
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>Feed</em>  feed The Feed to convert.</p></li><li><p><strong>return</strong>: <em>String</em>  OPML line based on the given feed.</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">toOPML</span> = <span class="keyword">function</span>(<span class="variable">feed</span>){
+	<span class="keyword">return</span> &<span class="variable">quot</span>;&<span class="variable">lt</span>;<span class="variable">outline</span> <span class="variable">text</span>=\&<span class="variable">quot</span>;&<span class="variable">quot</span>; + <span class="variable">feed</span>.<span class="variable">title</span> + &<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">description</span>=\&<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">title</span>=\&<span class="variable">quot</span>;&<span class="variable">quot</span>; + <span class="variable">feed</span>.<span class="variable">title</span> + &<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">type</span> = \&<span class="variable">quot</span>;<span class="variable">rss</span>\&<span class="variable">quot</span>; <span class="variable">version</span>=\&<span class="variable">quot</span>;<span class="class">RSS</span>\&<span class="variable">quot</span>; <span class="variable">htmlURL</span> = \&<span class="variable">quot</span>;&<span class="variable">quot</span>;+<span class="variable">feed</span>.<span class="variable">htmlURL</span>+ &<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">xmlUrl</span>=\&<span class="variable">quot</span>;&<span class="variable">quot</span>; + <span class="variable">feed</span>.<span class="variable">rssURL</span> +&<span class="variable">quot</span>;\&<span class="variable">quot</span>;/&<span class="variable">gt</span>;&<span class="variable">quot</span>;;
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Generates the JSON representation of a feed object.
+## </p>
+
+<ul><li><strong>return</strong>: <em>Hash</em>  JSON-encoded representation of a feed.</li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">toJSON</span> = <span class="keyword">function</span>(){
+	<span class="keyword">return</span> {&<span class="variable">quot</span>;<span class="variable">uid</span>&<span class="variable">quot</span>;:<span class="this">this</span>.<span class="variable">uid</span>,&<span class="variable">quot</span>;<span class="variable">rssURL</span>&<span class="variable">quot</span>;: <span class="this">this</span>.<span class="variable">rssURL</span>,&<span class="variable">quot</span>;<span class="variable">htmlURL</span>&<span class="variable">quot</span>;:<span class="this">this</span>.<span class="variable">htmlURL</span>, &<span class="variable">quot</span>;<span class="variable">title</span>&<span class="variable">quot</span>;:<span class="this">this</span>.<span class="variable">title</span>};
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Updates the values of a Feed from a new hash.
+## </p>
+
+<ul><li><strong>param</strong>: <em>Hash</em>  hash The hash of values to be assigned to the feed.</li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">update</span> = <span class="keyword">function</span>(<span class="variable">hash</span>){
+	<span class="keyword">if</span>(<span class="variable">hash</span>.<span class="variable">title</span> !== <span class="variable">undefined</span>){<span class="this">this</span>.<span class="variable">title</span> = <span class="variable">hash</span>.<span class="variable">title</span>;}
+	<span class="keyword">if</span>(<span class="variable">hash</span>.<span class="variable">rssURL</span> !== <span class="variable">undefined</span>){<span class="this">this</span>.<span class="variable">rssURL</span> = <span class="variable">hash</span>.<span class="variable">rssURL</span>;}
+	<span class="keyword">if</span>(<span class="variable">hash</span>.<span class="variable">htmlURL</span> !== <span class="variable">undefined</span>){<span class="this">this</span>.<span class="variable">htmlURL</span> = <span class="variable">hash</span>.<span class="variable">htmlURL</span>;}	
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Checks a feeds to see if it has the necessary values filled in.
+## </p>
+
+<ul><li><strong>return</strong>: <em>Boolean</em>  true if the Feed is valid, false if it is not.</li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">valid</span> = <span class="keyword">function</span>(){
+	<span class="keyword">return</span> (<span class="this">this</span>.<span class="variable">title</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">rssURL</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">htmlURL</span> !== <span class="variable">undefined</span>);
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Deletes all record of a Feed
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>Function(trueOrFalse)</em>  cb A callback function to continue work based on wether or not the feed was successfully deleted.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  Indicates wether or not the delete was successful.</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">destroy</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
+	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="this">this</span>.<span class="variable">uid</span>;
+	<span class="variable">client</span>.<span class="variable">del</span>([<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">title</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">htmlURL</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">rssURL</span>&<span class="variable">quot</span>;], <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
+		<span class="variable">cb</span>(<span class="variable">true</span>);
+	});
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Retrieves the data for each Item associated with a given feed. Defined as a class method so that it can be used in async methods.
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>Feed</em>  feed The feed you want to retrieve the items for.</p></li><li><p><strong>param</strong>: <em>function(err, results)</em>  cb The function that will receieve the array of items and any errors that might have occurred.</p></li><li><p><strong>return</strong>: <em>Error</em>  err Any errors encurred while looking up Items.</p></li><li><p><strong>return</strong>: <em>Array</em>  results An Array of Items with info retrieved from Redis</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">items</span> = <span class="keyword">function</span>(<span class="variable">feed</span>, <span class="variable">cb</span>){
+	<span class="keyword">var</span> <span class="variable">itemsString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="variable">feed</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">items</span>&<span class="variable">quot</span>;;
+	<span class="variable">client</span>.<span class="variable">smembers</span>(<span class="variable">itemsString</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">value</span>){
+		<span class="keyword">var</span> <span class="variable">ids</span> = <span class="variable">value</span> !== <span class="keyword">null</span> ? <span class="variable">value</span>.<span class="variable">toString</span>().<span class="variable">split</span>(<span class="string">','</span>) : [];
+		<span class="variable">async</span>.<span class="variable">map</span>(<span class="variable">ids</span>, <span class="class">Item</span>.<span class="variable">find</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
+			<span class="variable">cb</span>(<span class="variable">err</span>, <span class="variable">results</span>);
+		});
+	});
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Adds a tag to a Feed's list of tags(or folders)
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>String</em>  tag The tag you wish to add to a feed.</p></li><li><p><strong>param</strong>: <em>function(feed)</em>  cb A callback function that gets this feed instance as it's parameter to continue work on a feed.</p></li><li><p><strong>return</strong>: <em>Feed</em>  feed The feed after the given tag has been added.</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">addTag</span> = <span class="keyword">function</span>(<span class="variable">tag</span>, <span class="variable">cb</span>){
+	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="this">this</span>;
+	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="this">this</span>.<span class="variable">uid</span>;
+	<span class="variable">client</span>.<span class="variable">sadd</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">tags</span>&<span class="variable">quot</span>;, <span class="variable">tag</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
+		<span class="variable">feed</span>.<span class="variable">tags</span> = <span class="variable">feed</span>.<span class="variable">tags</span>.<span class="variable">concat</span>(<span class="variable">tag</span>);
+		<span class="variable">cb</span>(<span class="variable">feed</span>);
+	});
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Asks a Feed to commit it's data to Redis.
+## </p>
+
+<ul><li><p><strong>param</strong>: <em>Function</em>  cb A callback function that accepts on boolean argument indicating wether or not the save succeeded.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  An indication of wether or not the save succeeded.</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">save</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
+	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="this">this</span>;
+	<span class="keyword">if</span>(<span class="this">this</span>.<span class="variable">valid</span>()){
+		<span class="keyword">if</span>(<span class="variable">feed</span>.<span class="variable">uid</span> === <span class="variable">undefined</span>){
+			<span class="variable">client</span>.<span class="variable">incr</span>(<span class="string">'feedID'</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">newid</span>){
+				<span class="variable">feed</span>.<span class="variable">uid</span> = <span class="variable">newid</span>;
+				<span class="variable">feed</span>.<span class="variable">storeValues</span>(<span class="variable">cb</span>);
+			});
+		}<span class="keyword">else</span>{
+			<span class="variable">feed</span>.<span class="variable">storeValues</span>(<span class="variable">cb</span>);
+		}
+	}<span class="keyword">else</span>{
+		<span class="variable">cb</span>(<span class="variable">false</span>);
+	}
+};</code></pre>
+</td>
+</tr>
+<tr class="code">
+<td class="docs">
+<p> Actually asks a Feed to commit it's data to Redis. Schema for a feed works like so:
+ feed:uid:title, feed:uid:rssURL, feed:uid:htmlURL, feeds {feed:uid}
+ - <strong>privat</strong>: <em>e</em></p>
+
+<h2></h2>
+
+<ul><li><p><strong>param</strong>: <em>Function</em>  cb A callback function that accepts on boolean argument indicating wether or not the save succeeded.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  An indication of wether or not the save succeeded.</p></li></ul>
+</td>
+<td class="code">
+<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">storeValues</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
+	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="this">this</span>;
+	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="variable">feed</span>.<span class="variable">uid</span>;
+	<span class="keyword">var</span> <span class="variable">valuesAndKeys</span> = [<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">title</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">title</span>, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">rssURL</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">rssURL</span>, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">htmlURL</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">htmlURL</span>];
+	<span class="variable">client</span>.<span class="variable">mset</span>(<span class="variable">valuesAndKeys</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">response</span>){
+		<span class="keyword">if</span>(<span class="variable">response</span> === &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
+			<span class="variable">client</span>.<span class="variable">sadd</span>(<span class="variable">feed</span>.<span class="variable">userID</span>+&<span class="variable">quot</span>;:<span class="variable">feeds</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">uid</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
+				<span class="variable">cb</span>(<span class="variable">true</span>);
+			});
+		}<span class="keyword">else</span>{
+			<span class="variable">cb</span>(<span class="variable">false</span>);
+		}
+	});
+};
+
+<span class="variable">module</span>.<span class="variable">exports</span> = <span class="class">Feed</span>;</code></pre>
 </td>
 </tr><tr class="filename"><td><h2 id="../models/Item.js"><a href="#">Item</a></h2></td><td>../models/Item.js</td></tr><tr class="code">
 <td class="docs">
@@ -381,8 +622,8 @@ code .this { color: #19469D; }</style>
 	<span class="keyword">if</span>(<span class="variable">hash</span> !== <span class="variable">undefined</span>){
 		<span class="this">this</span>.<span class="variable">uid</span> = <span class="variable">hash</span>.<span class="variable">uid</span>;
 		<span class="this">this</span>.<span class="variable">status</span> = <span class="variable">hash</span>.<span class="variable">status</span>;
-		<span class="this">this</span>.<span class="variable">feed_id</span> = <span class="variable">hash</span>.<span class="variable">feed_id</span>;
-		<span class="this">this</span>.<span class="variable">date_modified</span> = <span class="variable">hash</span>.<span class="variable">date_modified</span>;
+		<span class="this">this</span>.<span class="variable">feedID</span> = <span class="variable">hash</span>.<span class="variable">feedID</span>;
+		<span class="this">this</span>.<span class="variable">dateModified</span> = <span class="variable">hash</span>.<span class="variable">dateModified</span>;
 	}
 }</code></pre>
 </td>
@@ -395,7 +636,7 @@ code .this { color: #19469D; }</style>
 <ul><li><p><strong>param</strong>: <em>Array</em>  arrayOfdicts An array of status hashes ( {'uid':'someitemuid','status':'read'})</p></li><li><p><strong>param</strong>: <em>function(trueOrFalse)</em>  cb A callback function that gets true or false as it's input value;</p></li><li><p><strong>return</strong>: <em>Boolean</em>  True or False depending on wether or not the updates were successful.</p></li></ul>
 </td>
 <td class="code">
-<pre><code><span class="class">Item</span>.<span class="variable">update_statuses</span> = <span class="keyword">function</span>(<span class="variable">arrayOfdicts</span>, <span class="variable">cb</span>){
+<pre><code><span class="class">Item</span>.<span class="variable">updateStatuses</span> = <span class="keyword">function</span>(<span class="variable">arrayOfdicts</span>, <span class="variable">cb</span>){
 	<span class="variable">async</span>.<span class="variable">forEach</span>(<span class="class">JSON</span>.<span class="variable">parse</span>(<span class="variable">arrayOfdicts</span>),
 		<span class="keyword">function</span>(<span class="variable">dict</span>, <span class="variable">cb</span>){
 			<span class="class">Item</span>.<span class="variable">find</span>(<span class="variable">dict</span>.<span class="variable">uid</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">item</span>){
@@ -416,27 +657,21 @@ code .this { color: #19469D; }</style>
 <p> Retrieves the information about a specific item.
 ## </p>
 
-<ul><li><p><strong>param</strong>: <em>String</em>  item_id An item's uid.</p></li><li><p><strong>param</strong>: <em>function(err, item)</em>  cb A callback that recieves possible errors along with an instance of Item with the retrieved values filled in.</p></li><li><p><strong>return</strong>: <em>Feed</em>  feed The retrieved feed.</p></li><li><p><strong>return</strong>: <em>Error</em>  err Any possible errors that occurred.</p></li></ul>
+<ul><li><p><strong>param</strong>: <em>String</em>  itemID An item's uid.</p></li><li><p><strong>param</strong>: <em>function(err, item)</em>  cb A callback that recieves possible errors along with an instance of Item with the retrieved values filled in.</p></li><li><p><strong>return</strong>: <em>Feed</em>  feed The retrieved feed.</p></li><li><p><strong>return</strong>: <em>Error</em>  err Any possible errors that occurred.</p></li></ul>
 </td>
 <td class="code">
-<pre><code><span class="class">Item</span>.<span class="variable">find</span> = <span class="keyword">function</span>(<span class="variable">item_id</span>, <span class="variable">cb</span>){
+<pre><code><span class="class">Item</span>.<span class="variable">find</span> = <span class="keyword">function</span>(<span class="variable">itemID</span>, <span class="variable">cb</span>){
 	<span class="keyword">var</span> <span class="variable">dict</span> = {};
-	<span class="variable">dict</span>.<span class="variable">uid</span> = <span class="variable">item_id</span>.<span class="variable">toString</span>();
-	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">item</span>:&<span class="variable">quot</span>;+<span class="variable">item_id</span>;
-	<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">uid</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">uid</span>){
-		<span class="keyword">if</span>(<span class="variable">uid</span> !== <span class="keyword">null</span>) { <span class="variable">dict</span>.<span class="variable">uid</span> = <span class="variable">uid</span>.<span class="variable">toString</span>();}
-		<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">status</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">status</span>){
-			<span class="keyword">if</span>(<span class="variable">status</span> !== <span class="keyword">null</span>) {<span class="variable">dict</span>.<span class="variable">status</span> = <span class="variable">status</span>.<span class="variable">toString</span>();}
-			<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">date_modified</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">date_modified</span>){
-				<span class="keyword">if</span>(<span class="variable">date_modified</span> !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">date_modified</span> = <span class="variable">date_modified</span>.<span class="variable">toString</span>();}
-				<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">feed_id</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">feed_id</span>){
-					<span class="keyword">if</span>(<span class="variable">feed_id</span> !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">feed_id</span> = <span class="variable">feed_id</span>.<span class="variable">toString</span>();}
-					<span class="keyword">var</span> <span class="variable">newItem</span> = <span class="keyword">new</span> <span class="class">Item</span>(<span class="variable">dict</span>);
-					<span class="variable">cb</span>(<span class="variable">err</span>, <span class="variable">newItem</span>);
-				});
-			});
-		});
-	});
+	<span class="variable">dict</span>.<span class="variable">uid</span> = <span class="variable">itemID</span>.<span class="variable">toString</span>();
+	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">item</span>:&<span class="variable">quot</span>;+<span class="variable">itemID</span>;
+	<span class="keyword">var</span> <span class="variable">keys</span> = [<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">status</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">dateModified</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">feedID</span>&<span class="variable">quot</span>;];
+	<span class="variable">client</span>.<span class="variable">mget</span>(<span class="variable">keys</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
+		<span class="keyword">if</span>(<span class="variable">results</span>[<span class="number integer">0</span>] !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">status</span> = <span class="variable">results</span>[<span class="number integer">0</span>].<span class="variable">toString</span>();}
+		<span class="keyword">if</span>(<span class="variable">results</span>[<span class="number integer">1</span>] !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">dateModified</span> = <span class="variable">results</span>[<span class="number integer">1</span>].<span class="variable">toString</span>();}
+		<span class="keyword">if</span>(<span class="variable">results</span>[<span class="number integer">2</span>] !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">feedID</span> = <span class="variable">results</span>[<span class="number integer">2</span>].<span class="variable">toString</span>();}
+		<span class="keyword">var</span> <span class="variable">newItem</span> = <span class="keyword">new</span> <span class="class">Item</span>(<span class="variable">dict</span>);
+		<span class="variable">cb</span>(<span class="variable">err</span>, <span class="variable">newItem</span>);
+	});	
 };</code></pre>
 </td>
 </tr>
@@ -462,7 +697,7 @@ code .this { color: #19469D; }</style>
 </td>
 <td class="code">
 <pre><code><span class="class">Item</span>.<span class="variable">prototype</span>.<span class="variable">valid</span> = <span class="keyword">function</span>(){
-	<span class="keyword">return</span> (<span class="this">this</span>.<span class="variable">uid</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">status</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">date_modified</span> !== <span class="variable">undefined</span>);
+	<span class="keyword">return</span> (<span class="this">this</span>.<span class="variable">uid</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">status</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">dateModified</span> !== <span class="variable">undefined</span>);
 };</code></pre>
 </td>
 </tr>
@@ -477,7 +712,7 @@ code .this { color: #19469D; }</style>
 <pre><code><span class="class">Item</span>.<span class="variable">prototype</span>.<span class="variable">save</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
 	<span class="keyword">var</span> <span class="variable">item</span> = <span class="this">this</span>;
 	<span class="keyword">if</span>(<span class="variable">item</span>.<span class="variable">valid</span>()){
-		<span class="variable">item</span>.<span class="variable">store_values</span>(<span class="variable">cb</span>);
+		<span class="variable">item</span>.<span class="variable">storeValues</span>(<span class="variable">cb</span>);
 	}<span class="keyword">else</span>{
 		<span class="variable">cb</span>(<span class="variable">false</span>);
 	}
@@ -490,25 +725,14 @@ code .this { color: #19469D; }</style>
  - <strong>privat</strong>: <em>e</em></p>
 </td>
 <td class="code">
-<pre><code><span class="class">Item</span>.<span class="variable">prototype</span>.<span class="variable">store_values</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
+<pre><code><span class="class">Item</span>.<span class="variable">prototype</span>.<span class="variable">storeValues</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
 	<span class="keyword">var</span> <span class="variable">item</span> = <span class="this">this</span>;
-	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">item</span>:&<span class="variable">quot</span>;;
-	<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">baseString</span>+<span class="variable">item</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">status</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">status</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">success</span>){
-		<span class="keyword">if</span>(<span class="variable">success</span> == &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
-			<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">baseString</span>+<span class="variable">item</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">date_modified</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">date_modified</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">success</span>){
-				<span class="keyword">if</span>(<span class="variable">success</span> == &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
-					<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">baseString</span>+<span class="variable">item</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">feed_id</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">feed_id</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">success</span>){
-						<span class="keyword">if</span>(<span class="variable">success</span> == &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
-							<span class="variable">client</span>.<span class="variable">sadd</span>(&<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="variable">item</span>.<span class="variable">feed_id</span>+&<span class="variable">quot</span>;:<span class="variable">items</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">uid</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
-								<span class="variable">cb</span>(<span class="variable">true</span>);
-							});
-						}<span class="keyword">else</span>{
-							<span class="variable">cb</span>(<span class="variable">false</span>);
-						}
-					});
-				}<span class="keyword">else</span>{
-					<span class="variable">cb</span>(<span class="variable">false</span>);
-				}
+	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">item</span>:&<span class="variable">quot</span>;+<span class="variable">item</span>.<span class="variable">uid</span>;
+	<span class="keyword">var</span> <span class="variable">valuesAndKeys</span> = [<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">status</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">status</span>, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">feedID</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">feedID</span>, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">dateModified</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">dateModified</span>];
+	<span class="variable">client</span>.<span class="variable">mset</span>(<span class="variable">valuesAndKeys</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">response</span>){
+		<span class="keyword">if</span>(<span class="variable">response</span> === &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
+			<span class="variable">client</span>.<span class="variable">sadd</span>(<span class="string">'feed:'</span>+<span class="variable">item</span>.<span class="variable">feedID</span>+&<span class="variable">quot</span>;:<span class="variable">items</span>&<span class="variable">quot</span>;, <span class="variable">item</span>.<span class="variable">uid</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">response</span>){
+				<span class="variable">cb</span>(<span class="variable">true</span>);
 			});
 		}<span class="keyword">else</span>{
 			<span class="variable">cb</span>(<span class="variable">false</span>);
@@ -516,235 +740,6 @@ code .this { color: #19469D; }</style>
 	});
 };
 <span class="variable">module</span>.<span class="variable">exports</span> = <span class="class">Item</span>;</code></pre>
-</td>
-</tr><tr class="filename"><td><h2 id="../models/Feed.js"><a href="#">Feed</a></h2></td><td>../models/Feed.js</td></tr><tr class="code">
-<td class="docs">
-<p> Pull in deps.</p>
-</td>
-<td class="code">
-<pre><code><span class="keyword">var</span> <span class="variable">redis</span> = <span class="variable">require</span>(&<span class="variable">quot</span>;<span class="variable">redis</span>&<span class="variable">quot</span>;),
-	<span class="variable">client</span> = <span class="variable">redis</span>.<span class="variable">createClient</span>(),
-	<span class="variable">async</span> = <span class="variable">require</span>(<span class="string">'async'</span>),
-	<span class="class">Item</span> = <span class="variable">require</span>(<span class="string">'./Item'</span>);</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Feed encapsulates the feed-specific operations performed by the API.
- - <strong>constructo</strong>: <em>r</em></p>
-</td>
-<td class="code">
-<pre><code><span class="keyword">function</span> <span class="class">Feed</span>(<span class="variable">hash</span>){
-	<span class="keyword">if</span>(<span class="variable">hash</span> !== <span class="variable">undefined</span>){
-		<span class="this">this</span>.<span class="variable">uid</span> = <span class="variable">hash</span>.<span class="variable">uid</span>;
-		<span class="this">this</span>.<span class="variable">title</span> = <span class="variable">hash</span>.<span class="variable">title</span>;
-		<span class="this">this</span>.<span class="variable">rss_url</span> = <span class="variable">hash</span>.<span class="variable">rss_url</span>;
-		<span class="this">this</span>.<span class="variable">html_url</span> = <span class="variable">hash</span>.<span class="variable">html_url</span>;
-		<span class="this">this</span>.<span class="variable">user_id</span> = <span class="string">''</span>;
-		<span class="this">this</span>.<span class="variable">tags</span> = <span class="variable">hash</span>.<span class="variable">tags</span>;
-	}
-}</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Generates an instanced of Feed with values retrieved from Redis given a feed's UID.
-## </p>
-
-<ul><li><p><strong>param</strong>: <em>String</em>  feed_id The UID of the feed you wish to find.</p></li><li><p><strong>return</strong>: <em>Feed</em>  A Feed instance with all values filled in</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">find</span> = <span class="keyword">function</span>(<span class="variable">feed_id</span>, <span class="variable">cb</span>){
-	<span class="keyword">var</span> <span class="variable">dict</span> = {};
-	<span class="variable">dict</span>.<span class="variable">uid</span> = <span class="variable">feed_id</span>.<span class="variable">toString</span>();
-	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="variable">feed_id</span>;
-	<span class="variable">client</span>.<span class="variable">smembers</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">tags</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">tagsBuffer</span>){
-		<span class="keyword">if</span>(<span class="variable">tagsBuffer</span> !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">tags</span> = <span class="variable">tagsBuffer</span>.<span class="variable">toString</span>().<span class="variable">split</span>(<span class="string">','</span>);}
-		<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">title</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">title</span>){
-			<span class="keyword">if</span>(<span class="variable">title</span> !== <span class="keyword">null</span>) { <span class="variable">dict</span>.<span class="variable">title</span> = <span class="variable">title</span>.<span class="variable">toString</span>();}
-			<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">rss_url</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">rss_url</span>){
-				<span class="keyword">if</span>(<span class="variable">rss_url</span> !== <span class="keyword">null</span>) {<span class="variable">dict</span>.<span class="variable">rss_url</span> = <span class="variable">rss_url</span>.<span class="variable">toString</span>();}
-				<span class="variable">client</span>.<span class="variable">get</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">html_url</span>&<span class="variable">quot</span>;, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">html_url</span>){
-					<span class="keyword">if</span>(<span class="variable">html_url</span> !== <span class="keyword">null</span>){<span class="variable">dict</span>.<span class="variable">html_url</span> = <span class="variable">html_url</span>.<span class="variable">toString</span>();}
-					<span class="keyword">var</span> <span class="variable">newFeed</span> = <span class="keyword">new</span> <span class="class">Feed</span>(<span class="variable">dict</span>);
-					<span class="variable">cb</span>(<span class="variable">err</span>, <span class="variable">newFeed</span>);
-				});
-			});
-		});
-	});
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Generates the OPML line for a given feed.
-## </p>
-
-<ul><li><p><strong>param</strong>: <em>Feed</em>  feed The Feed to convert.</p></li><li><p><strong>return</strong>: <em>String</em>  OPML Line based on the given feed.</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">toOPML</span> = <span class="keyword">function</span>(<span class="variable">feed</span>){
-	<span class="keyword">return</span> &<span class="variable">quot</span>;&<span class="variable">lt</span>;<span class="variable">outline</span> <span class="variable">text</span>=\&<span class="variable">quot</span>;&<span class="variable">quot</span>; + <span class="variable">feed</span>.<span class="variable">title</span> + &<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">description</span>=\&<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">title</span>=\&<span class="variable">quot</span>;&<span class="variable">quot</span>; + <span class="variable">feed</span>.<span class="variable">title</span> + &<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">type</span> = \&<span class="variable">quot</span>;<span class="variable">rss</span>\&<span class="variable">quot</span>; <span class="variable">version</span>=\&<span class="variable">quot</span>;<span class="class">RSS</span>\&<span class="variable">quot</span>; <span class="variable">html_Url</span> = \&<span class="variable">quot</span>;&<span class="variable">quot</span>;+<span class="variable">feed</span>.<span class="variable">html_url</span>+ &<span class="variable">quot</span>;\&<span class="variable">quot</span>; <span class="variable">xmlUrl</span>=\&<span class="variable">quot</span>;&<span class="variable">quot</span>; + <span class="variable">feed</span>.<span class="variable">rss_url</span> +&<span class="variable">quot</span>;\&<span class="variable">quot</span>;/&<span class="variable">gt</span>;&<span class="variable">quot</span>;;
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Generates the JSON representation of a feed object.
-## </p>
-
-<ul><li><strong>return</strong>: <em>Hash</em>  JSON-encoded representation of a feed.</li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">toJSON</span> = <span class="keyword">function</span>(){
-	<span class="keyword">return</span> {&<span class="variable">quot</span>;<span class="variable">uid</span>&<span class="variable">quot</span>;:<span class="this">this</span>.<span class="variable">uid</span>,&<span class="variable">quot</span>;<span class="variable">rss_url</span>&<span class="variable">quot</span>;: <span class="this">this</span>.<span class="variable">rss_url</span>,&<span class="variable">quot</span>;<span class="variable">html_url</span>&<span class="variable">quot</span>;:<span class="this">this</span>.<span class="variable">html_url</span>, &<span class="variable">quot</span>;<span class="variable">title</span>&<span class="variable">quot</span>;:<span class="this">this</span>.<span class="variable">title</span>};
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Updates the values of a Feed from a new hash.
-## </p>
-
-<ul><li><strong>param</strong>: <em>Hash</em>  hash The hash of values to be assigned to the feed.</li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">update</span> = <span class="keyword">function</span>(<span class="variable">hash</span>){
-	<span class="keyword">if</span>(<span class="variable">hash</span>.<span class="variable">title</span> !== <span class="variable">undefined</span>){<span class="this">this</span>.<span class="variable">title</span> = <span class="variable">hash</span>.<span class="variable">title</span>;}
-	<span class="keyword">if</span>(<span class="variable">hash</span>.<span class="variable">rss_url</span> !== <span class="variable">undefined</span>){<span class="this">this</span>.<span class="variable">rss_url</span> = <span class="variable">hash</span>.<span class="variable">rss_url</span>;}
-	<span class="keyword">if</span>(<span class="variable">hash</span>.<span class="variable">html_url</span> !== <span class="variable">undefined</span>){<span class="this">this</span>.<span class="variable">html_url</span> = <span class="variable">hash</span>.<span class="variable">html_url</span>;}	
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Checks a feeds to see if it has the necessary values filled in.
-## </p>
-
-<ul><li><strong>return</strong>: <em>Boolean</em>  true if the Feed is valid, false if it is not.</li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">valid</span> = <span class="keyword">function</span>(){
-	<span class="keyword">return</span> (<span class="this">this</span>.<span class="variable">title</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">rss_url</span> !== <span class="variable">undefined</span> &<span class="variable">amp</span>;&<span class="variable">amp</span>; <span class="this">this</span>.<span class="variable">html_url</span> !== <span class="variable">undefined</span>);
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Deletes all record of a Feed
-## </p>
-
-<ul><li><p><strong>param</strong>: <em>Function(trueOrFalse)</em>  cb A callback function to continue work based on wether or not the feed was successfully deleted.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  Indicates wether or not the delete was successful.</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">destroy</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
-	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="this">this</span>.<span class="variable">uid</span>;
-	<span class="variable">client</span>.<span class="variable">del</span>([<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">title</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">html_url</span>&<span class="variable">quot</span>;, <span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">rss_url</span>&<span class="variable">quot</span>;], <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
-		<span class="variable">cb</span>(<span class="variable">true</span>);
-	});
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Retrieves the data for each Item associated with a given feed. Defined as a class method so that it can be used in async methods.
-## </p>
-
-<ul><li><p><strong>param</strong>: <em>Feed</em>  feed The feed you want to retrieve the items for.</p></li><li><p><strong>param</strong>: <em>function(err, results)</em>  cb The function that will receieve the array of items and any errors that might have occurred.</p></li><li><p><strong>return</strong>: <em>Error</em>  err Any errors encurred while looking up Items.</p></li><li><p><strong>return</strong>: <em>Array</em>  results An Array of Items with info retrieved from Redis</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">items</span> = <span class="keyword">function</span>(<span class="variable">feed</span>, <span class="variable">cb</span>){
-	<span class="keyword">var</span> <span class="variable">itemsString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="variable">feed</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">items</span>&<span class="variable">quot</span>;;
-	<span class="variable">client</span>.<span class="variable">smembers</span>(<span class="variable">itemsString</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">value</span>){
-		<span class="keyword">var</span> <span class="variable">ids</span> = <span class="variable">value</span>.<span class="variable">toString</span>().<span class="variable">split</span>(<span class="string">','</span>);
-		<span class="variable">async</span>.<span class="variable">map</span>(<span class="variable">ids</span>, <span class="class">Item</span>.<span class="variable">find</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
-			<span class="variable">cb</span>(<span class="variable">err</span>, <span class="variable">results</span>);
-		});
-	});
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Adds a tag to a Feed's list of tags(or folders)
-## </p>
-
-<ul><li><p><strong>param</strong>: <em>String</em>  tag The tag you wish to add to a feed.</p></li><li><p><strong>param</strong>: <em>function(feed)</em>  cb A callback function that gets this feed instance as it's parameter to continue work on a feed.</p></li><li><p><strong>return</strong>: <em>Feed</em>  feed The feed after the given tag has been added.</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">add_tag</span> = <span class="keyword">function</span>(<span class="variable">tag</span>, <span class="variable">cb</span>){
-	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="this">this</span>;
-	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;+<span class="this">this</span>.<span class="variable">uid</span>;
-	<span class="variable">client</span>.<span class="variable">sadd</span>(<span class="variable">baseString</span>+&<span class="variable">quot</span>;:<span class="variable">tags</span>&<span class="variable">quot</span>;, <span class="variable">tag</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
-		<span class="variable">feed</span>.<span class="variable">tags</span> = <span class="variable">feed</span>.<span class="variable">tags</span>.<span class="variable">concat</span>(<span class="variable">tag</span>);
-		<span class="variable">cb</span>(<span class="variable">feed</span>);
-	});
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Asks a Feed to commit it's data to Redis.
-## </p>
-
-<ul><li><p><strong>param</strong>: <em>Function</em>  cb A callback function that accepts on boolean argument indicating wether or not the save succeeded.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  An indication of wether or not the save succeeded.</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">save</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
-	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="this">this</span>;
-	<span class="keyword">if</span>(<span class="this">this</span>.<span class="variable">valid</span>()){
-		<span class="keyword">if</span>(<span class="variable">feed</span>.<span class="variable">uid</span> === <span class="variable">undefined</span>){
-			<span class="variable">client</span>.<span class="variable">incr</span>(<span class="string">'feed_id'</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">newid</span>){
-				<span class="variable">feed</span>.<span class="variable">uid</span> = <span class="variable">newid</span>;
-				<span class="this">this</span>.<span class="variable">store_values</span>(<span class="variable">cb</span>);
-			});
-		}<span class="keyword">else</span>{
-			<span class="this">this</span>.<span class="variable">store_values</span>(<span class="variable">cb</span>);
-		}
-	}<span class="keyword">else</span>{
-		<span class="variable">cb</span>(<span class="variable">false</span>);
-	}
-};</code></pre>
-</td>
-</tr>
-<tr class="code">
-<td class="docs">
-<p> Actually asks a Feed to commit it's data to Redis. Schema for a feed works like so:
- feed:uid:title, feed:uid:rss<em>url, feed:uid:html</em>url, feeds {feed:uid}
- - <strong>privat</strong>: <em>e</em></p>
-
-<h2></h2>
-
-<ul><li><p><strong>param</strong>: <em>Function</em>  cb A callback function that accepts on boolean argument indicating wether or not the save succeeded.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  An indication of wether or not the save succeeded.</p></li></ul>
-</td>
-<td class="code">
-<pre><code><span class="class">Feed</span>.<span class="variable">prototype</span>.<span class="variable">store_values</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
-	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="this">this</span>;
-	<span class="keyword">var</span> <span class="variable">baseString</span> = &<span class="variable">quot</span>;<span class="variable">feed</span>:&<span class="variable">quot</span>;;
-	<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">baseString</span>+<span class="variable">feed</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">title</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">title</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">success</span>){
-		<span class="keyword">if</span>(<span class="variable">success</span> == &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
-			<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">baseString</span>+<span class="variable">feed</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">rss_url</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">rss_url</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">success</span>){
-				<span class="keyword">if</span>(<span class="variable">success</span> == &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
-					<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">baseString</span>+<span class="variable">feed</span>.<span class="variable">uid</span>+&<span class="variable">quot</span>;:<span class="variable">html_url</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">html_url</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">success</span>){
-						<span class="keyword">if</span>(<span class="variable">success</span> == &<span class="variable">quot</span>;<span class="class">OK</span>&<span class="variable">quot</span>;){
-							<span class="variable">client</span>.<span class="variable">sadd</span>(<span class="variable">feed</span>.<span class="variable">user_id</span>+&<span class="variable">quot</span>;:<span class="variable">feeds</span>&<span class="variable">quot</span>;, <span class="variable">feed</span>.<span class="variable">uid</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
-								<span class="variable">cb</span>(<span class="variable">true</span>);
-							});
-						}<span class="keyword">else</span>{
-							<span class="variable">cb</span>(<span class="variable">false</span>);
-						}
-					});
-				}<span class="keyword">else</span>{
-					<span class="variable">cb</span>(<span class="variable">false</span>);
-				}
-			});
-		}<span class="keyword">else</span>{
-			<span class="variable">cb</span>(<span class="variable">false</span>);
-		}
-	});
-};
-
-<span class="variable">module</span>.<span class="variable">exports</span> = <span class="class">Feed</span>;</code></pre>
 </td>
 </tr><tr class="filename"><td><h2 id="../models/User.js"><a href="#">User</a></h2></td><td>../models/User.js</td></tr><tr class="code">
 <td class="docs">
@@ -763,9 +758,9 @@ code .this { color: #19469D; }</style>
  - <strong>constructo</strong>: <em>r</em></p>
 </td>
 <td class="code">
-<pre><code><span class="keyword">function</span> <span class="class">User</span>(<span class="variable">akey</span>){
-	<span class="keyword">if</span>(<span class="variable">akey</span> != <span class="variable">undefined</span>){
-		<span class="this">this</span>.<span class="variable">key</span> = <span class="variable">akey</span>;
+<pre><code><span class="keyword">function</span> <span class="class">User</span>(<span class="variable">hash</span>){
+	<span class="keyword">if</span>(<span class="variable">hash</span> != <span class="variable">undefined</span>){
+		<span class="this">this</span>.<span class="variable">key</span> = <span class="variable">hash</span>[<span class="string">'key'</span>];
 	}
 }</code></pre>
 </td>
@@ -793,12 +788,15 @@ code .this { color: #19469D; }</style>
 <td class="code">
 <pre><code><span class="class">User</span>.<span class="variable">prototype</span>.<span class="variable">save</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
 	<span class="keyword">var</span> <span class="variable">user</span> = <span class="this">this</span>;
+	<span class="keyword">var</span> <span class="variable">d</span> = <span class="keyword">new</span> <span class="class">Date</span>();
 	<span class="comment">// Generate a new key if you need to.</span>
 	<span class="keyword">if</span>(<span class="this">this</span>.<span class="variable">key</span> == <span class="variable">undefined</span>){
-		<span class="variable">client</span>.<span class="variable">incr</span>(<span class="string">'user_id'</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">newid</span>){
+		<span class="variable">client</span>.<span class="variable">incr</span>(<span class="string">'userID'</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">newid</span>){
 			<span class="variable">user</span>.<span class="variable">key</span> = <span class="variable">newid</span>; <span class="comment">// Might wanna do some hashing or combine this key with the date or some such.</span>
 			<span class="variable">client</span>.<span class="variable">sadd</span>(&<span class="variable">quot</span>;<span class="variable">users</span>&<span class="variable">quot</span>;, <span class="variable">user</span>.<span class="variable">key</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">retVal</span>){
-				<span class="variable">cb</span>(<span class="variable">true</span>);
+				<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">user</span>.<span class="variable">key</span> + &<span class="variable">quot</span>;:<span class="variable">feedModified</span>&<span class="variable">quot</span>;, <span class="variable">d</span>.<span class="variable">toString</span>(), <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
+					<span class="variable">cb</span>(<span class="variable">true</span>);
+				});
 			});
 		});
 	}
@@ -846,10 +844,14 @@ code .this { color: #19469D; }</style>
 <pre><code><span class="class">User</span>.<span class="variable">prototype</span>.<span class="variable">feeds</span> = <span class="keyword">function</span>(<span class="variable">cb</span>){
 	<span class="keyword">var</span> <span class="variable">feedsString</span> = <span class="this">this</span>.<span class="variable">key</span>+<span class="string">':feeds'</span>;
 	<span class="variable">client</span>.<span class="variable">smembers</span>(<span class="variable">feedsString</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">value</span>){
-		<span class="keyword">var</span> <span class="variable">ids</span> = <span class="variable">value</span>.<span class="variable">toString</span>().<span class="variable">split</span>(<span class="string">','</span>);
-		<span class="variable">async</span>.<span class="variable">map</span>(<span class="variable">ids</span>, <span class="class">Feed</span>.<span class="variable">find</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
-			<span class="variable">cb</span>(<span class="variable">results</span>);
-		});
+		<span class="keyword">if</span>(<span class="variable">value</span> === <span class="keyword">null</span>){
+			<span class="variable">cb</span>([]);	
+		}<span class="keyword">else</span>{
+			<span class="keyword">var</span> <span class="variable">ids</span> = <span class="variable">value</span>.<span class="variable">toString</span>().<span class="variable">split</span>(<span class="string">','</span>);
+			<span class="variable">async</span>.<span class="variable">map</span>(<span class="variable">ids</span>, <span class="class">Feed</span>.<span class="variable">find</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
+				<span class="variable">cb</span>(<span class="variable">results</span>);
+			});
+		}
 	});
 };</code></pre>
 </td>
@@ -862,11 +864,15 @@ code .this { color: #19469D; }</style>
 <ul><li><p><strong>param</strong>: <em>Hash</em>  hash The hash containing necessary info to create a Feed.</p></li><li><p><strong>param</strong>: <em>function(trueOrFalse, feed)</em>  cb A callback function that is told wether or not the addition succeeded and, upon success, the created feed itself.</p></li><li><p><strong>return</strong>: <em>Boolean</em>  success Wether or not the addition succceed.</p></li><li><p><strong>return</strong>: <em>Feed</em>  feed The newly created feed object.</p></li></ul>
 </td>
 <td class="code">
-<pre><code><span class="class">User</span>.<span class="variable">prototype</span>.<span class="variable">add_feed</span> = <span class="keyword">function</span>(<span class="variable">hash</span>, <span class="variable">cb</span>){
+<pre><code><span class="class">User</span>.<span class="variable">prototype</span>.<span class="variable">addFeed</span> = <span class="keyword">function</span>(<span class="variable">hash</span>, <span class="variable">cb</span>){
 	<span class="keyword">var</span> <span class="variable">feed</span> = <span class="keyword">new</span> <span class="class">Feed</span>(<span class="variable">hash</span>);
-	<span class="variable">feed</span>.<span class="variable">user_id</span> = <span class="this">this</span>.<span class="variable">key</span>;
+	<span class="keyword">var</span> <span class="variable">user</span> = <span class="this">this</span>;
+	<span class="variable">feed</span>.<span class="variable">userID</span> = <span class="this">this</span>.<span class="variable">key</span>;
 	<span class="variable">feed</span>.<span class="variable">save</span>(<span class="keyword">function</span>(<span class="variable">success</span>){
-		<span class="variable">cb</span>(<span class="variable">success</span>, <span class="variable">feed</span>);
+		<span class="keyword">var</span> <span class="variable">d</span> = <span class="keyword">new</span> <span class="class">Date</span>();
+		<span class="variable">client</span>.<span class="variable">set</span>(<span class="variable">user</span>.<span class="variable">key</span> + &<span class="variable">quot</span>;:<span class="variable">feedModified</span>&<span class="variable">quot</span>;, <span class="variable">d</span>.<span class="variable">toString</span>(), <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
+			<span class="variable">cb</span>(<span class="variable">success</span>, <span class="variable">feed</span>);
+		});
 	});
 };</code></pre>
 </td>
@@ -879,11 +885,11 @@ code .this { color: #19469D; }</style>
 <ul><li><p><strong>param</strong>: <em>Date</em>  date The earliest a requested status update should come from.</p></li><li><p><strong>param</strong>: <em>function(err, array)</em>  cb A callback function that gets any errors generated during lookup and an array of Items successfully retrieved.</p></li><li><p><strong>return</strong>: <em>Error</em>  Any possible errors generated during lookup.</p></li><li><p><strong>return</strong>: <em>Array</em>  An array of all Items that have been updates since the given date.</p></li></ul>
 </td>
 <td class="code">
-<pre><code><span class="class">User</span>.<span class="variable">prototype</span>.<span class="variable">status_updates_since</span> = <span class="keyword">function</span>(<span class="variable">date</span>, <span class="variable">cb</span>){
+<pre><code><span class="class">User</span>.<span class="variable">prototype</span>.<span class="variable">statusUpdatesSince</span> = <span class="keyword">function</span>(<span class="variable">date</span>, <span class="variable">cb</span>){
 	<span class="this">this</span>.<span class="variable">feeds</span>(<span class="keyword">function</span>(<span class="variable">results</span>){
 		<span class="variable">async</span>.<span class="variable">concat</span>(<span class="variable">results</span>, <span class="class">Feed</span>.<span class="variable">items</span>, <span class="keyword">function</span>(<span class="variable">err</span>, <span class="variable">results</span>){
 			<span class="variable">async</span>.<span class="variable">filter</span>(<span class="variable">results</span>, <span class="keyword">function</span>(<span class="variable">item</span>, <span class="variable">cb</span>){
-				<span class="keyword">var</span> <span class="variable">itemDate</span> = <span class="keyword">new</span> <span class="class">Date</span>(<span class="variable">item</span>.<span class="variable">date_modified</span>);
+				<span class="keyword">var</span> <span class="variable">itemDate</span> = <span class="keyword">new</span> <span class="class">Date</span>(<span class="variable">item</span>.<span class="variable">dateModified</span>);
 				<span class="keyword">if</span>(<span class="variable">itemDate</span> &<span class="variable">gt</span>; <span class="variable">date</span>){
 					<span class="variable">cb</span>(<span class="variable">true</span>);
 				}<span class="keyword">else</span>{
