@@ -80,7 +80,6 @@ app.get('/feedlist.:format', function(req, res){
 						if(req.param('format') == 'opml'){res.send(Feed.opml(array), { 'Last-Modified': dateString });}
 					});
 				};
-				
 				if(modifiedSince !== undefined && value !== null){
 					var dateA = new Date(value.toString());
 					var dateB = new Date(modifiedSince);
