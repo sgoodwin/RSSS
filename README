@@ -17,7 +17,7 @@ http://www.json.org/js.html
 UserID (random-generated string, tell users apart)
 
 schema:
-UserID
+User ID (userID:feeds, userID:feedModified)
      Feeds (uid, title, rssURL, htmlURL ), (folder:uid:name, etc )
 		Tag(or Folder) (name), ( feed:uid:tags )
 		Items (uid, status, dateModified, feedID ), (item:uid:status, etc ) // Not sure if feedID is necessary.

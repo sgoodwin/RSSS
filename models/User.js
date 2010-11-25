@@ -96,10 +96,7 @@ User.prototype.addFeed = function(hash, cb){
 	var user = this;
 	feed.userID = this.key;
 	feed.save(function(success){
-		var d = new Date();
-		client.set(user.key + ":feedModified", d.toString(), function(err, results){
-			cb(success, feed);
-		});
+		cb(success, feed);
 	});
 };
 

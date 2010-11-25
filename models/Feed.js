@@ -147,7 +147,10 @@ Feed.prototype.save = function(cb){
 		if(feed.uid === undefined){
 			client.incr('feedID', function(err, newid){
 				feed.uid = newid;
-				feed.storeValues(cb);
+				var d = new Date();
+				client.set(feed.userID + ":feedModified", d.toString(), function(err, results){
+					feed.storeValues(cb);
+				});
 			});
 		}else{
 			feed.storeValues(cb);

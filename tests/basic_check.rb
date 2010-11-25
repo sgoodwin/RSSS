@@ -24,7 +24,7 @@ def check_new_user
   res = Net::HTTP.get_response URI.parse("http://0.0.0.0:3000/newuser.json");
   parse_json(res.body);
 end
-check_new_user
+#check_new_user
 
 def check_check_user
   # GET check User (verifies that a userID is valid)
