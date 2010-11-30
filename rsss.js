@@ -220,4 +220,4 @@ app.post('/status.:format?', function(req, res){
 /*
  Start server now.
 */
-if (!module.parent) {app.listen(3000);}
+if (!module.parent) {app.listen(8080);}
