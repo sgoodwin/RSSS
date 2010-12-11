@@ -1,4 +1,5 @@
 set :application, "RSSS"
+set :name, "node-god-rsss-instances"
 set :repository,  "git://github.com/sgoodwin/RSSS.git"
 set :use_sudo,    false
 set :scm, :git
@@ -15,12 +16,13 @@ namespace :deploy do
   end
 
   task :stop, :roles => :app do
-    # Do nothing.
+    sudo "god stop #{name}"
+    sudo "god load #{File.join deploy_to, 'current', 'god.config'}"
+    sudo "god start #{name}"
   end
 
   desc "Restart Application"
   task :restart, :roles => :app do
-    run "stop rsss"
-    run "start rsss"
+    sudo "god restart #{name}"
   end
 end

@@ -1,7 +1,7 @@
-app_root  = "/Users/sgoodwin/Node/RSSS"
+app_root  = "/home/sgoodwin/RSSS/current"
 
 God.watch do |w|
-  w.name     = "node-god-instances"
+  w.name     = "node-god-rsss-instances"
   w.group    = 'node-god'
   w.interval = 5.seconds
 
