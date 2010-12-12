@@ -1,7 +1,5 @@
 set :application, "RSSS"
-set :name, "node-god-rsss-instances"
 set :repository,  "git://github.com/sgoodwin/RSSS.git"
-set :use_sudo,    false
 set :scm, :git
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 set :deploy_to,   "~/#{application}"
@@ -16,13 +14,13 @@ namespace :deploy do
   end
 
   task :stop, :roles => :app do
-    sudo "god stop #{name}"
-    sudo "god load #{File.join deploy_to, 'current', 'god.config'}"
-    sudo "god start #{name}"
+    run "/var/lib/gems/1.9.0/bin/god stop node-god-rsss-instances"
   end
 
   desc "Restart Application"
   task :restart, :roles => :app do
-    sudo "god restart #{name}"
+    run "/var/lib/gems/1.9.0/bin/god stop node-god-rsss-instances"
+    run "/var/lib/gems/1.9.0/bin/god load #{File.join deploy_to, 'current', 'node.god'}"
+    run "/var/lib/gems/1.9.0/bin/god start node-god-rsss-instances"
   end
 end
