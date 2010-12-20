@@ -4,7 +4,8 @@
 var redis = require("redis"),
 	client = redis.createClient(),
 	async = require('async'),
-	Feed = require('./Feed');
+	Feed = require('./Feed'),
+	sys = require('sys');
 
 /*
  User: holds no personal data, only used to tell people's feeds/folders apart;
@@ -73,7 +74,7 @@ User.prototype.exists = function(cb){
 User.prototype.feeds = function(cb){
 	var feedsString = this.key+':feeds';
 	client.smembers(feedsString, function(err, value){
-		if(value === null){
+		if(value.toString() === null || value.toString().length === 0){
 			cb([]);	
 		}else{
 			var ids = value.toString().split(',');
